@@ -1,4 +1,4 @@
-package commandsinit
+package commands
 
 import (
 	"fmt"
