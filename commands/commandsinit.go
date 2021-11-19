@@ -1,4 +1,4 @@
-package commandsschemas
+package commandsinit
 
 import (
 	"fmt"
