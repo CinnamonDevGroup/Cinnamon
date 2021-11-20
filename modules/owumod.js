@@ -7,5 +7,6 @@ var slashData = [
 
 function slashCommands() {
 
-    return slashData
+    var slashJSON = JSON.stringify(slashData)
+    return slashJSON
 }

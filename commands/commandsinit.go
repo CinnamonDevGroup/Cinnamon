@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -45,12 +46,16 @@ func InitCommands(vm *goja.Runtime) (commandsList string, err error) {
 			panic("Not a function")
 		}
 
-		slashData, err := slashDataReturn(vm.Undefined)
+		slashData, err := slashDataReturn(goja.Undefined())
+
+		slashSlice := slashData.Export()
 
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(slashData)
+
+		uwu, err := json.Marshal(slashSlice)
+		fmt.Println(uwu)
 	}
 
 	fmt.Println(len(modList))
