@@ -13,6 +13,7 @@ import (
 	//	"gorm.io/gorm"
 	"github.com/AngelFluffyOokami/Cinnamon/commands"
 	"github.com/bwmarrin/discordgo"
+	"github.com/dop251/goja"
 	//	"gorm.io/driver/sqlite3"
 )
 
@@ -21,8 +22,6 @@ type Rankings struct {
 }
 
 func main() {
-
-	schema := commands.MessageCreate
 
 	if _, err := os.Stat("./config.json"); err == nil {
 		log.Println("Configuration file found, loading configuration...")
@@ -61,6 +60,11 @@ func main() {
 		return
 	}
 
+	vm := goja.New()
+
+	commands.InitCommands(vm)
+
+	schema := commands.MessageCreate
 	dgo.AddHandler(schema)
 	dgo.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 	err = dgo.Open()
