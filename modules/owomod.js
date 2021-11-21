@@ -1,12 +1,32 @@
-var slashData = [
-    {name: "Pong", description: "Ping!"},
-    {name: "Ping", description: "Pong!"},
-    {name: "Plink", description: "Plonk!"},
-    {name: "Plonk!", description: "Plink!"}
- ];
+const slashData = {
+slashCommands: [
+        {
+            Name: "ping",
+            Description: "Pong!"
+        },
+        {
+            Name: "pong",
+            Description: "Ping!"
+        },
+        {
+            Name: "plink",
+            Description: "Plonk!"
+        },
+        {
+            Name: "plonk",
+            Description: "Plink!"
+        }
+    ]
+};
+
 
 function slashCommands() {
 
-    var slashJSON = JSON.stringify(slashData)
-    return slashJSON
+    return JSON.stringify(slashData)
 }
+
+console.log(slashData)
+
+console.log(JSON.parse(JSON.stringify(slashData)))
+
+console.log(JSON.stringify(slashData))

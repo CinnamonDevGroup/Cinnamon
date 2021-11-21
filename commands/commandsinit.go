@@ -49,12 +49,19 @@ func InitCommands(vm *goja.Runtime) (commandsList string, err error) {
 		slashData, err := slashDataReturn(goja.Undefined())
 
 		slashSlice := slashData.Export()
+		fmt.Println(slashSlice)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		uwu, err := json.Marshal(slashSlice)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		owo, err := jsonParse()
 		fmt.Println(uwu)
 	}
 
