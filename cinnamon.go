@@ -7,14 +7,15 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
 	//	"gorm.io/gorm"
 	"github.com/AngelFluffyOokami/Cinnamon/commands"
 	"github.com/bwmarrin/discordgo"
-	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/go-plugin/examples/grpc/shared"
 	//	"gorm.io/driver/sqlite3"
 )
 
@@ -30,7 +31,7 @@ func main() {
 	} else if errors.Is(err, os.ErrNotExist) {
 		//	create a map with contents to include in the JSON file.
 		config := map[string]interface{}{
-			"token": "inserttokenhere",
+			"token": "tokenhere",
 		}
 		//	Pretty JSON
 		data, err := json.MarshalIndent(config, "", "    ")
@@ -53,9 +54,13 @@ func main() {
 	}
 
 	token := jsonFile["token"].(string)
+	cookey = jsonFile["CookieKeyUUID"].(string)
+	cookieVal = jsonFile["CookieValueUUID"].(string)
 	if token == "inserttokenhere" {
 		log.Fatal("No valid token has been detected, please insert bot token in the local configuration json file!")
 	}
+
+	addForeignPlugin(cookey, cookieVal)
 
 	dgo, err := discordgo.New("Bot " + token)
 
@@ -100,26 +105,57 @@ func jsonParse() (map[string]interface{}, error) {
 	return result, err
 }
 
-func pluginAdd() {
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name: "plugin",
-		Output: os.Stdout,
-		Level: hclog.Debug,
-	})
-	
+func addForeignPlugin(cookey string, cookieVal string) {
+
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins: pluginMap,
-		Cmd: exec.Command("./modules/greeter")
+		HandshakeConfig: shared.handshakeConfig,
+		Plugins:         shared.PluginMap,
+		Cmd:             exec.Command("~/./jumpstart"),
+		AllowedProtocols: []plugin.Protocol{
+			plugin.ProtocolGRPC},
 	})
+	defer client.Kill()
+
+	rpcClient, err := client.Client()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	raw, err := rpcClient.Dispense("kv_grpc")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	kv := raw.(shared.KV)
+	switch os.Args[0] {
+	case "GET":
+		result, err := kv.Get(os.Args[1])
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Println(string(result))
+
+	case "PUT":
+		err := kv.Put(os.Args[1], []byte(os.Args[2]))
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+	default:
+		fmt.Println("Only GET or PUT allowed", os.Args[0])
+		os.Exit(1)
+	}
 }
 
 var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
-	MagicCookieKey:   "BASIC_PLUGIN",
-	MagicCookieValue: "hello",
+	MagicCookieKey:   cookey,
+	MagicCookieValue: cookieVal,
 }
 
-var pluginMap = map[string]plugin.Plugin{
-	"greeter": &example.GreeterPlugin{},
-}
+var cookey string
+
+var cookieVal string

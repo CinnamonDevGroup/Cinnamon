@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	example "github.com/AngelFluffyOokami/Cinnamon/commons"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 )
