@@ -13,7 +13,8 @@ import (
 	//	"gorm.io/gorm"
 	"github.com/AngelFluffyOokami/Cinnamon/commands"
 	"github.com/bwmarrin/discordgo"
-	"github.com/dop251/goja"
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
 	//	"gorm.io/driver/sqlite3"
 )
 
@@ -63,10 +64,6 @@ func main() {
 		return
 	}
 
-	vm := goja.New()
-
-	commands.InitCommands(vm)
-
 	schema := commands.MessageCreate
 	dgo.AddHandler(schema)
 	dgo.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
@@ -101,4 +98,28 @@ func jsonParse() (map[string]interface{}, error) {
 	json.Unmarshal([]byte(byteValue), &result)
 
 	return result, err
+}
+
+func pluginAdd() {
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name: "plugin",
+		Output: os.Stdout,
+		Level: hclog.Debug,
+	})
+	
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins: pluginMap,
+		Cmd: exec.Command("./modules/greeter")
+	})
+}
+
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "BASIC_PLUGIN",
+	MagicCookieValue: "hello",
+}
+
+var pluginMap = map[string]plugin.Plugin{
+	"greeter": &example.GreeterPlugin{},
 }
