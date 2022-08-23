@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	//	"gorm.io/gorm"
+	"github.com/AngelFluffyOokami/Cinnamon/voice"
 	"github.com/bwmarrin/discordgo"
 	"github.com/zmb3/spotify"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
@@ -34,7 +35,9 @@ func init() {
 	} else if errors.Is(err, os.ErrNotExist) {
 		//	create a map with contents to include in the JSON file.
 		config := map[string]interface{}{
-			"token": "tokenhere",
+			"token":        "tokenhere",
+			"clientID":     "clientIDhere",
+			"clientSecret": "clientSecrethere",
 		}
 		//	Pretty JSON
 		data, err := json.MarshalIndent(config, "", "    ")
@@ -57,11 +60,12 @@ func init() {
 	}
 
 	disToken := jsonFile["token"].(string)
-
+	spotClientID := jsonFile["clientID"].(string)
+	spotClientSecret := jsonFile["clientSecret"].(string)
 	ctx := context.Background()
 	config := &clientcredentials.Config{
-		ClientID:     "7dbf7748a46c4b0db939c668f51f8785",
-		ClientSecret: "e97db6d4ba6a4ee3a25d4d1eeb1bbf2e",
+		ClientID:     spotClientID,
+		ClientSecret: spotClientSecret,
 		TokenURL:     spotifyauth.TokenURL,
 	}
 
@@ -79,6 +83,11 @@ func init() {
 		log.Fatalf("Invalid bot parameters: %v", err)
 	}
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := voice.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i, Client)
+		}
+	})
 	err = s.Open()
 
 	if err != nil {
@@ -90,8 +99,18 @@ func main() {
 
 	fmt.Println("Bot is running")
 
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(voice.Commands))
+
+	for i, v := range voice.Commands {
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+		registeredCommands[i] = cmd
+	}
+
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
 	s.Close()
