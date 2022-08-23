@@ -1,25 +1,28 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
 
 	//	"gorm.io/gorm"
-	"github.com/AngelFluffyOokami/Cinnamon/commands"
 	"github.com/bwmarrin/discordgo"
-	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/go-plugin/examples/grpc/shared"
+	"github.com/zmb3/spotify"
+	spotifyauth "github.com/zmb3/spotify/v2/auth"
+	"golang.org/x/oauth2/clientcredentials"
 	//	"gorm.io/driver/sqlite3"
 )
 
-func main() {
+var Client spotify.Client
+var s *discordgo.Session
+
+func init() {
 
 	//	if ./config.json exists, then:
 	//	else if ./config.json does not exist, then:
@@ -49,35 +52,41 @@ func main() {
 	jsonFile, err := jsonParse()
 
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
 
-	token := jsonFile["token"].(string)
-	cookey = jsonFile["CookieKeyUUID"].(string)
-	cookieVal = jsonFile["CookieValueUUID"].(string)
-	if token == "inserttokenhere" {
-		log.Fatal("No valid token has been detected, please insert bot token in the local configuration json file!")
+	disToken := jsonFile["token"].(string)
+
+	ctx := context.Background()
+	config := &clientcredentials.Config{
+		ClientID:     "7dbf7748a46c4b0db939c668f51f8785",
+		ClientSecret: "e97db6d4ba6a4ee3a25d4d1eeb1bbf2e",
+		TokenURL:     spotifyauth.TokenURL,
 	}
 
-	addForeignPlugin(cookey, cookieVal)
+	token, err := config.Token(ctx)
 
-	dgo, err := discordgo.New("Bot " + token)
+	httpClient := spotifyauth.New().Client(ctx, token)
+
+	Client = spotify.NewClient(httpClient)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
-
-	schema := commands.MessageCreate
-	dgo.AddHandler(schema)
-	dgo.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
-	err = dgo.Open()
+	s, err = discordgo.New("Bot " + disToken)
+	if err != nil {
+		log.Fatalf("Invalid bot parameters: %v", err)
+	}
+	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
+	err = s.Open()
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
+}
+
+func main() {
 
 	fmt.Println("Bot is running")
 
@@ -85,7 +94,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	dgo.Close()
+	s.Close()
 
 }
 
@@ -104,58 +113,3 @@ func jsonParse() (map[string]interface{}, error) {
 
 	return result, err
 }
-
-func addForeignPlugin(cookey string, cookieVal string) {
-
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: shared.handshakeConfig,
-		Plugins:         shared.PluginMap,
-		Cmd:             exec.Command("~/./jumpstart"),
-		AllowedProtocols: []plugin.Protocol{
-			plugin.ProtocolGRPC},
-	})
-	defer client.Kill()
-
-	rpcClient, err := client.Client()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	raw, err := rpcClient.Dispense("kv_grpc")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	kv := raw.(shared.KV)
-	switch os.Args[0] {
-	case "GET":
-		result, err := kv.Get(os.Args[1])
-		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-
-		fmt.Println(string(result))
-
-	case "PUT":
-		err := kv.Put(os.Args[1], []byte(os.Args[2]))
-		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		}
-
-	default:
-		fmt.Println("Only GET or PUT allowed", os.Args[0])
-		os.Exit(1)
-	}
-}
-
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   cookey,
-	MagicCookieValue: cookieVal,
-}
-
-var cookey string
-
-var cookieVal string
