@@ -23,6 +23,17 @@ import (
 var Client spotify.Client
 var s *discordgo.Session
 
+type serverStruct struct {
+	server string
+	tracks []string
+}
+
+type serversStruct struct {
+	servers []serverStruct
+}
+
+var servers voice.ServersStruct
+
 func init() {
 
 	//	if ./config.json exists, then:
@@ -84,9 +95,15 @@ func init() {
 	}
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := voice.CommandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i, Client)
+		if i.Interaction.Type == 2 {
+			if h, ok := voice.CommandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i, Client, servers)
+			}
 		}
+
+	})
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		voice.OnInteractionResponse(s, i, servers)
 	})
 	err = s.Open()
 

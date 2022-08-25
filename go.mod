@@ -13,6 +13,7 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/grafov/m3u8 v0.11.1 // indirect
 	github.com/hashicorp/go-hclog v1.2.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
@@ -20,6 +21,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
 	github.com/oklog/run v1.0.0 // indirect
+	github.com/ompluscator/dynamic-struct v1.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/zackradisic/soundcloud-api v0.1.5 // indirect
 	github.com/zmb3/spotify v1.3.0 // indirect
