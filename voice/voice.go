@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
@@ -577,20 +578,29 @@ func voiceControl(s *discordgo.Session, i *discordgo.InteractionCreate, z *Serve
 }
 
 func playQueue(dgv *discordgo.VoiceConnection, whereServerAt int, z *ServersStruct, ctrl chan bool) {
-
+	queuePosition := 0
+	queueLength := 0
 	for x := 0; x < len(z.servers[whereServerAt].queue); x++ {
 
-		if x == 0 {
+		queueLength = len(z.servers[whereServerAt].queue)
+
+		queueAdjustedLength := queueLength - queuePosition
+
+		if queueAdjustedLength >= 1 {
 			downloadQueue(z, whereServerAt, x)
-		} else {
-			oldFilename := z.servers[whereServerAt].queue[x-1].uuid
-			deleteOldFile(oldFilename, whereServerAt, x-1)
-			downloadQueue(z, whereServerAt, x+1)
+			if queueAdjustedLength >= 2 {
+				downloadQueue(z, whereServerAt, x+1)
+			}
 		}
+
 		filename := z.servers[whereServerAt].queue[x].uuid
 
 		os.Open("./tmp/" + filename)
 		dgvoice.PlayAudioFile(dgv, "./tmp/"+filename, ctrl)
+		time.Sleep(10 * time.Second)
+
+		oldFilename := z.servers[whereServerAt].queue[x].uuid
+		deleteOldFile(oldFilename, whereServerAt, x-1)
 
 	}
 
