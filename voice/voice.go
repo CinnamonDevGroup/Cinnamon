@@ -162,7 +162,7 @@ func FetchSpotifyURL(songURI string, c spotify.Client, sc *soundcloudapi.API) (b
 	return shouldContinue, tracks[0].Title + tracks[0].User.Username
 }
 
-func fetchSong(songURI string, z ServersStruct, i *discordgo.InteractionCreate) (bool, *discordgo.InteractionResponse, []string) {
+func fetchSong(songURI string, z *ServersStruct, i *discordgo.InteractionCreate) (bool, *discordgo.InteractionResponse, []string) {
 
 	var response *discordgo.InteractionResponse
 	sc, err := soundcloudapi.New(soundcloudapi.APIOptions{})
@@ -198,7 +198,7 @@ func fetchSong(songURI string, z ServersStruct, i *discordgo.InteractionCreate) 
 
 }
 
-func structBuilder(trackURL []string, i *discordgo.InteractionCreate, z ServersStruct, id string) {
+func structBuilder(trackURL []string, i *discordgo.InteractionCreate, z *ServersStruct, id string) {
 	var exists bool
 	var whereServerAt int
 	var whereUserAt int
@@ -259,7 +259,7 @@ func structBuilder(trackURL []string, i *discordgo.InteractionCreate, z ServersS
 			userStruct,
 		}
 		serverStruct := serverStruct{
-			server: i.Member.GuildID,
+			server: i.GuildID,
 			user:   userIndexedStruct,
 		}
 		z.servers = append(z.servers, serverStruct)
@@ -415,8 +415,8 @@ var (
 		},
 	}
 
-	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z ServersStruct){
-		"cinplay": func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z ServersStruct) {
+	CommandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z *ServersStruct){
+		"cinplay": func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z *ServersStruct) {
 
 			defer func() {
 				if err := recover(); err != nil {
@@ -494,68 +494,67 @@ var (
 			}
 
 		},
-		"cinlatch": func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z ServersStruct) {
+		"cinlatch": func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z *ServersStruct) {
 
 		},
-		"cinstream": func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z ServersStruct) {
+		"cinstream": func(s *discordgo.Session, i *discordgo.InteractionCreate, c spotify.Client, z *ServersStruct) {
 
 		},
 	}
 )
 
-func OnInteractionResponse(s *discordgo.Session, i *discordgo.InteractionCreate, z ServersStruct, ctrl chan bool) {
-	if i.Interaction.Type == 3 {
+func OnInteractionResponse(s *discordgo.Session, i *discordgo.InteractionCreate, z *ServersStruct, ctrl chan bool) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("panic occurred:", err)
+		}
+	}()
+	interactionResponse := i.MessageComponentData()
+
+	if interactionResponse.CustomID == "track" {
+		fmt.Print(interactionResponse.Values[0])
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("panic occurred:", err)
+			}
+		}()
+		trackNumber, _ := strconv.Atoi(interactionResponse.Values[0])
+		trackNumber = trackNumber - 1
+		var whereServerAt int
+		var whereUserAt int
+
+		for x := 0; x < len(z.servers); x++ {
+			if z.servers[x].server == i.GuildID {
+				whereServerAt = x
+			}
+		}
+		for x := 0; x < len(z.servers[whereServerAt].user); x++ {
+			if z.servers[whereServerAt].user[x].userID == i.Member.User.ID {
+				whereUserAt = x
+			}
+		}
 
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println("panic occurred:", err)
 			}
 		}()
-		interactionResponse := i.MessageComponentData()
 
-		if interactionResponse.CustomID == "track" {
-			fmt.Print(interactionResponse.Values[0])
-			defer func() {
-				if err := recover(); err != nil {
-					log.Println("panic occurred:", err)
-				}
-			}()
-			trackNumber, _ := strconv.Atoi(interactionResponse.Values[0])
-			var whereServerAt int
-			var whereUserAt int
+		queueTrack(trackNumber, whereServerAt, whereUserAt, i.Message.ID, i.Member.User.ID, z)
 
-			for x := 0; x < len(z.servers); x++ {
-				if z.servers[x].server == i.Member.GuildID {
-					whereServerAt = x
-				}
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("panic occurred:", err)
 			}
-			for x := 0; x < len(z.servers[whereServerAt].user); x++ {
-				if z.servers[whereServerAt].user[x].userID == i.Member.User.ID {
-					whereUserAt = x
-				}
-			}
+		}()
 
-			defer func() {
-				if err := recover(); err != nil {
-					log.Println("panic occurred:", err)
-				}
-			}()
-
-			queueTrack(trackNumber, whereServerAt, whereUserAt, i.Message.ID, i.Member.User.ID, z)
-
-			defer func() {
-				if err := recover(); err != nil {
-					log.Println("panic occurred:", err)
-				}
-			}()
-
-			voiceControl(s, i, z, whereServerAt, ctrl)
-		}
-
+		voiceControl(s, i, z, whereServerAt, ctrl)
 	}
+
 }
 
-func voiceControl(s *discordgo.Session, i *discordgo.InteractionCreate, z ServersStruct, whereServerAt int, ctrl chan bool) {
+func voiceControl(s *discordgo.Session, i *discordgo.InteractionCreate, z *ServersStruct, whereServerAt int, ctrl chan bool) {
 
 	selfInVoice, userInVoice, userChannelID, selfChannelID := checkVC(s, i)
 	var dgv *discordgo.VoiceConnection
@@ -566,7 +565,7 @@ func voiceControl(s *discordgo.Session, i *discordgo.InteractionCreate, z Server
 				//todo insert handling for bot in use in different channel
 			}
 		} else {
-			dgv = voiceConnect(s, userChannelID, i.Member.GuildID)
+			dgv = voiceConnect(s, userChannelID, i.GuildID)
 			play = true
 		}
 	} else {
@@ -577,13 +576,12 @@ func voiceControl(s *discordgo.Session, i *discordgo.InteractionCreate, z Server
 	}
 }
 
-func playQueue(dgv *discordgo.VoiceConnection, whereServerAt int, z ServersStruct, ctrl chan bool) {
+func playQueue(dgv *discordgo.VoiceConnection, whereServerAt int, z *ServersStruct, ctrl chan bool) {
 
 	for x := 0; x < len(z.servers[whereServerAt].queue); x++ {
 
 		if x == 0 {
 			downloadQueue(z, whereServerAt, x)
-			downloadQueue(z, whereServerAt, x+1)
 		} else {
 			oldFilename := z.servers[whereServerAt].queue[x-1].uuid
 			deleteOldFile(oldFilename, whereServerAt, x-1)
@@ -602,13 +600,13 @@ func deleteOldFile(filename string, whereServerAt int, whereTrackAt int) {
 
 	os.Remove("./tmp/" + filename)
 }
-func downloadQueue(z ServersStruct, whereServerAt int, whereTrackAt int) {
+func downloadQueue(z *ServersStruct, whereServerAt int, whereTrackAt int) {
 	sc, err := soundcloudapi.New(soundcloudapi.APIOptions{})
 	if err != nil {
 		log.Panic(err)
 	}
 
-	f, _ := os.Open("./tmp/" + z.servers[whereServerAt].queue[whereTrackAt].uuid)
+	f, _ := os.Create("./tmp/" + z.servers[whereServerAt].queue[whereTrackAt].uuid)
 
 	track := soundcloudapi.GetTrackInfoOptions{
 		URL: z.servers[whereServerAt].queue[whereTrackAt].url,
@@ -649,7 +647,7 @@ func checkVC(s *discordgo.Session, i *discordgo.InteractionCreate) (bool, bool, 
 	return selfInVoice, userInVoice, userChannelID, selfChannelID
 }
 
-func queueTrack(trak int, whereServerAt int, whereUserAt int, id string, userID string, z ServersStruct) {
+func queueTrack(trak int, whereServerAt int, whereUserAt int, id string, userID string, z *ServersStruct) {
 	var trackURL string
 	for x := 0; x < len(z.servers[whereServerAt].user[whereUserAt].queries); x++ {
 		if z.servers[whereServerAt].user[whereUserAt].queries[x].ID == id {

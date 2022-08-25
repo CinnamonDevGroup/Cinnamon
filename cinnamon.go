@@ -22,15 +22,7 @@ import (
 
 var Client spotify.Client
 var s *discordgo.Session
-
-type serverStruct struct {
-	server string
-	tracks []string
-}
-
-type serversStruct struct {
-	servers []serverStruct
-}
+var control chan bool
 
 var servers voice.ServersStruct
 
@@ -97,14 +89,14 @@ func init() {
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Interaction.Type == 2 {
 			if h, ok := voice.CommandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i, Client, servers)
+				h(s, i, Client, &servers)
 			}
+		} else if i.Interaction.Type == 3 {
+			voice.OnInteractionResponse(s, i, &servers, control)
 		}
 
 	})
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		voice.OnInteractionResponse(s, i, servers)
-	})
+
 	err = s.Open()
 
 	if err != nil {
