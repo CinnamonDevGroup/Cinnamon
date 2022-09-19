@@ -22,7 +22,6 @@ import (
 
 var Client spotify.Client
 var s *discordgo.Session
-var control chan bool
 
 var servers voice.ServersStruct
 
@@ -92,7 +91,7 @@ func init() {
 				h(s, i, Client, &servers)
 			}
 		} else if i.Interaction.Type == 3 {
-			voice.OnInteractionResponse(s, i, &servers, control)
+			voice.OnInteractionResponse(s, i, &servers)
 		}
 
 	})
