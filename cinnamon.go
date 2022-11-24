@@ -11,21 +11,22 @@ import (
 	"os/signal"
 	"syscall"
 
-	//	"gorm.io/gorm"
-	"github.com/AngelFluffyOokami/Cinnamon/voice"
 	"github.com/bwmarrin/discordgo"
+	"github.com/glebarez/sqlite"
 	"github.com/zmb3/spotify"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2/clientcredentials"
-	//	"gorm.io/driver/sqlite3"
+	"gorm.io/gorm"
 )
 
 var Client spotify.Client
 var s *discordgo.Session
-
-var servers voice.ServersStruct
+var db *gorm.DB
+var err error
 
 func init() {
+
+	db, err = gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
 
 	//	if ./config.json exists, then:
 	//	else if ./config.json does not exist, then:
@@ -85,16 +86,6 @@ func init() {
 		log.Fatalf("Invalid bot parameters: %v", err)
 	}
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.Interaction.Type == 2 {
-			if h, ok := voice.CommandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i, Client, &servers)
-			}
-		} else if i.Interaction.Type == 3 {
-			voice.OnInteractionResponse(s, i, &servers)
-		}
-
-	})
 
 	err = s.Open()
 
@@ -106,16 +97,6 @@ func init() {
 func main() {
 
 	fmt.Println("Bot is running")
-
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(voice.Commands))
-
-	for i, v := range voice.Commands {
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &v)
-		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
-		}
-		registeredCommands[i] = cmd
-	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)

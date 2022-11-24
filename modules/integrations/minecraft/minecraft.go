@@ -1,0 +1,5 @@
+package minecraft
+
+func StartDaemon() {
+
+}
