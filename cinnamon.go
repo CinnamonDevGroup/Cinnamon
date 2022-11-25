@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft"
 	"github.com/bwmarrin/discordgo"
 	"github.com/glebarez/sqlite"
 	"github.com/zmb3/spotify"
@@ -22,11 +23,19 @@ import (
 var Client spotify.Client
 var s *discordgo.Session
 var db *gorm.DB
+var cache *gorm.DB
 var err error
 
 func init() {
 
-	db, err = gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open("database/gorm.db"), &gorm.Config{})
+	if err != nil {
+		log.Panic(err)
+	}
+	db, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		log.Panic(err)
+	}
 
 	//	if ./config.json exists, then:
 	//	else if ./config.json does not exist, then:
@@ -92,6 +101,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	minecraft.Run(s)
 }
 
 func main() {
