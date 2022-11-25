@@ -1,12 +1,12 @@
-package UserModel
+package userModel
 
-type PerServerPreferences struct {
+type perServerPreferences struct {
 	Pronouns         string
 	Nickname         string
 	AffectionAllowed bool
 }
 
-type PerUserPreferences struct {
+type perUserPreferences struct {
 	Pronouns            string
 	Nickname            string
 	AffectionAllowed    bool
@@ -19,6 +19,18 @@ type User struct {
 	DefaultPronouns string
 	DefaultNickname string
 	DefaultAffect   bool
-	ServerPrefer    []PerServerPreferences
+	ServerPrefer    []perServerPreferences
+	UserPrefer      []perUserPreferences
 	CurrentServers  []string
+	XP              []globalXP
+}
+
+type globalXP struct {
+	TotalXP     int
+	PerServerXP []guildXP
+}
+
+type guildXP struct {
+	GID string
+	XP  int
 }
