@@ -1,6 +1,6 @@
 package guildModel
 
-import MinecraftModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/Minecraft"
+import MinecraftModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/minecraft"
 
 type config struct {
 	Minecraft           MinecraftModel.Minecraft
@@ -10,8 +10,8 @@ type config struct {
 type Guild struct {
 	GID    string
 	Joined string
-	About  information
-	Config config
+	About  information `gorm:"serializer:json"`
+	Config config      `gorm:"serializer:json"`
 }
 
 type information struct {
@@ -23,8 +23,8 @@ type information struct {
 }
 
 type message struct {
-	MessageTime string
-	UID         string
+	MessageCount int
+	TimeCount    int
 }
 
 type guildUser struct {
@@ -51,13 +51,14 @@ type warning struct {
 
 type ban struct {
 	BanReason string
-	BannedAt  int
+	BannedOn  int
 }
 
 type kick struct {
 	KickReason string
 	KickedOn   int
 }
+
 type mute struct {
 	MuteReason    string
 	MuteDuration  int

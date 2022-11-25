@@ -10,3 +10,6 @@ __debug_bin.exe
 *.mp3
 *.sh
 tmp.txt
+database/cinnamon.db
+database/guilds.db
+database/users.db

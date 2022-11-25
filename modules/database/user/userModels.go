@@ -19,10 +19,10 @@ type User struct {
 	DefaultPronouns string
 	DefaultNickname string
 	DefaultAffect   bool
-	ServerPrefer    []perServerPreferences
-	UserPrefer      []perUserPreferences
-	CurrentServers  []string
-	XP              []globalXP
+	ServerPrefer    []perServerPreferences `gorm:"serializer:json"`
+	UserPrefer      []perUserPreferences   `gorm:"serializer:json"`
+	CurrentServers  []string               `gorm:"serializer:json"`
+	XP              []globalXP             `gorm:"serializer:json"`
 }
 
 type globalXP struct {

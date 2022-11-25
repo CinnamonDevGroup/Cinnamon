@@ -11,6 +11,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	cinnamonModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/cinnamon"
+	guildModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/guild"
+	userModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/user"
 	"github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft"
 	"github.com/bwmarrin/discordgo"
 	"github.com/glebarez/sqlite"
@@ -22,20 +25,42 @@ import (
 
 var Client spotify.Client
 var s *discordgo.Session
-var db *gorm.DB
-var cache *gorm.DB
+var guildDB *gorm.DB
+var cinnamonDB *gorm.DB
+var userDB *gorm.DB
 var err error
+
+type multidbmodel struct {
+	user     *gorm.DB
+	guild    *gorm.DB
+	cinnamon *gorm.DB
+}
+
+var multidb multidbmodel
 
 func init() {
 
-	db, err = gorm.Open(sqlite.Open("database/gorm.db"), &gorm.Config{})
+	guildDB, err = gorm.Open(sqlite.Open("database/guilds.db"), &gorm.Config{})
 	if err != nil {
 		log.Panic(err)
 	}
-	db, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	userDB, err = gorm.Open(sqlite.Open("database/users.db"), &gorm.Config{})
 	if err != nil {
 		log.Panic(err)
 	}
+	cinnamonDB, err = gorm.Open(sqlite.Open("database/cinnamon.db"), &gorm.Config{})
+
+	guildDB.AutoMigrate(&guildModel.Guild{})
+
+	userDB.AutoMigrate(&userModel.User{})
+
+	cinnamonDB.AutoMigrate(&cinnamonModel.Cinnamon{})
+
+	multidb.user = userDB
+
+	multidb.guild = guildDB
+
+	multidb.cinnamon = cinnamonDB
 
 	//	if ./config.json exists, then:
 	//	else if ./config.json does not exist, then:
@@ -101,7 +126,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	minecraft.Run(s)
+	go minecraft.Run(s)
 }
 
 func main() {
