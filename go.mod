@@ -35,7 +35,7 @@ require (
 	github.com/flosch/pongo2 v0.0.0-20200529170236-5abacdfa4915 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/glebarez/go-sqlite v1.19.1 // indirect
+	github.com/glebarez/go-sqlite v1.19.5 // indirect
 	github.com/glebarez/sqlite v1.5.0 // indirect
 	github.com/go-delve/delve v1.5.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -77,6 +77,7 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.7.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tjarratt/babble v0.0.0-20210505082055-cbca2a4833c1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.starlark.net v0.0.0-20190702223751-32f345186213 // indirect
 	golang.org/x/arch v0.0.0-20190927153633-4e8777c89be4 // indirect
@@ -89,8 +90,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.0 // indirect
-	modernc.org/libc v1.19.0 // indirect
+	modernc.org/libc v1.21.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.4.0 // indirect
-	modernc.org/sqlite v1.19.1 // indirect
+	modernc.org/sqlite v1.19.5 // indirect
 )

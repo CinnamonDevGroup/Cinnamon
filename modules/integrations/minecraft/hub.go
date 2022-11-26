@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	databaseHelper "github.com/AngelFluffyOokami/Cinnamon/modules/core/database"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -32,7 +33,7 @@ func newHub() *Hub {
 	}
 }
 
-func (h *Hub) run(s *discordgo.Session) {
+func (h *Hub) run(s *discordgo.Session, DB databaseHelper.DBstruct) {
 	for {
 		select {
 		case client := <-h.register:
@@ -77,6 +78,8 @@ func (h *Hub) run(s *discordgo.Session) {
 					switch receivedData.DataType {
 					case "playerMessage":
 						onPlayerMessage(receivedData.Data, s)
+					case "playerJoin":
+						onPlayerJoin(receivedData.Data, s)
 					}
 					select {
 					case client.send <- fauxjson:

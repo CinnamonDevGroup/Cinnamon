@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,56 +10,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	cinnamonModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/cinnamon"
-	guildModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/guild"
-	userModel "github.com/AngelFluffyOokami/Cinnamon/modules/database/user"
+	databaseHelper "github.com/AngelFluffyOokami/Cinnamon/modules/core/database"
+	"github.com/AngelFluffyOokami/Cinnamon/modules/core/discord"
+	coreserver "github.com/AngelFluffyOokami/Cinnamon/modules/core/server"
 	"github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft"
 	"github.com/bwmarrin/discordgo"
-	"github.com/glebarez/sqlite"
-	"github.com/zmb3/spotify"
-	spotifyauth "github.com/zmb3/spotify/v2/auth"
-	"golang.org/x/oauth2/clientcredentials"
-	"gorm.io/gorm"
 )
 
-var Client spotify.Client
 var s *discordgo.Session
-var guildDB *gorm.DB
-var cinnamonDB *gorm.DB
-var userDB *gorm.DB
-var err error
-
-type multidbmodel struct {
-	user     *gorm.DB
-	guild    *gorm.DB
-	cinnamon *gorm.DB
-}
-
-var multidb multidbmodel
 
 func init() {
-
-	guildDB, err = gorm.Open(sqlite.Open("database/guilds.db"), &gorm.Config{})
-	if err != nil {
-		log.Panic(err)
-	}
-	userDB, err = gorm.Open(sqlite.Open("database/users.db"), &gorm.Config{})
-	if err != nil {
-		log.Panic(err)
-	}
-	cinnamonDB, err = gorm.Open(sqlite.Open("database/cinnamon.db"), &gorm.Config{})
-
-	guildDB.AutoMigrate(&guildModel.Guild{})
-
-	userDB.AutoMigrate(&userModel.User{})
-
-	cinnamonDB.AutoMigrate(&cinnamonModel.Cinnamon{})
-
-	multidb.user = userDB
-
-	multidb.guild = guildDB
-
-	multidb.cinnamon = cinnamonDB
 
 	//	if ./config.json exists, then:
 	//	else if ./config.json does not exist, then:
@@ -72,9 +31,7 @@ func init() {
 	} else if errors.Is(err, os.ErrNotExist) {
 		//	create a map with contents to include in the JSON file.
 		config := map[string]interface{}{
-			"token":        "tokenhere",
-			"clientID":     "clientIDhere",
-			"clientSecret": "clientSecrethere",
+			"token": "tokenhere",
 		}
 		//	Pretty JSON
 		data, err := json.MarshalIndent(config, "", "    ")
@@ -97,36 +54,35 @@ func init() {
 	}
 
 	disToken := jsonFile["token"].(string)
-	spotClientID := jsonFile["clientID"].(string)
-	spotClientSecret := jsonFile["clientSecret"].(string)
-	ctx := context.Background()
-	config := &clientcredentials.Config{
-		ClientID:     spotClientID,
-		ClientSecret: spotClientSecret,
-		TokenURL:     spotifyauth.TokenURL,
+
+	DB := databaseHelper.Init()
+	s = discord.Init(disToken)
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := minecraft.CommandsHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i, DB)
+		}
+	})
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := coreserver.CommandsHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i, DB)
+		}
+	})
+
+	allCommands := append(minecraft.Commands, coreserver.Commands...)
+
+	log.Println("Adding commands...")
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(allCommands))
+	for i, v := range allCommands {
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+		registeredCommands[i] = cmd
 	}
-
-	token, err := config.Token(ctx)
-
-	httpClient := spotifyauth.New().Client(ctx, token)
-
-	Client = spotify.NewClient(httpClient)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	s, err = discordgo.New("Bot " + disToken)
-	if err != nil {
-		log.Fatalf("Invalid bot parameters: %v", err)
-	}
-	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
-
-	err = s.Open()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	go minecraft.Run(s)
+	s.AddHandler(func(s *discordgo.Session, z *discordgo.GuildCreate) {
+		coreserver.OnServerJoin(s, z, DB)
+	})
+	go minecraft.Init(s, DB)
 }
 
 func main() {
@@ -137,6 +93,19 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
+	log.Println("Removing commands...")
+
+	commands, err := s.ApplicationCommands(s.State.User.ID, "")
+	if err != nil {
+		panic(err)
+	}
+	commandLen := len(commands)
+	for x := 0; x < commandLen; x++ {
+		err := s.ApplicationCommandDelete(s.State.User.ID, "", commands[x].ID)
+		if err != nil {
+			panic(err)
+		}
+	}
 	s.Close()
 
 }

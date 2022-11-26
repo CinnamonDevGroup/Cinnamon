@@ -13,3 +13,7 @@ tmp.txt
 database/cinnamon.db
 database/guilds.db
 database/users.db
+database/users
+database/guilds
+database/minecraft
+database/cinnamon
