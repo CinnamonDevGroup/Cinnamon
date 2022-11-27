@@ -2,9 +2,9 @@ package commonutils
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
-	databaseHelper "github.com/AngelFluffyOokami/Cinnamon/modules/core/database"
 	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
 	"github.com/bwmarrin/discordgo"
 	"github.com/tjarratt/babble"
@@ -17,10 +17,11 @@ func BabbleWords() string {
 	babbler := babble.NewBabbler()
 	babbler.Count = 6
 	babbler.Words = wordlist
-	return babbler.Babble()
+	key := babbler.Babble()
+	return key
 }
 
-func initializeServer(GID string, DB databaseHelper.DBstruct, s *discordgo.Session) {
+func initializeServer(GID string, DB *gorm.DB, s *discordgo.Session) {
 
 	var JoinedAt []int64
 
@@ -52,14 +53,15 @@ func initializeServer(GID string, DB databaseHelper.DBstruct, s *discordgo.Sessi
 		},
 	}
 
-	DB.Guilds.Create(&guild)
+	result := DB.Create(&guild)
+	fmt.Print(result.Error)
 
 }
 
-func CheckServerExists(GID string, DB databaseHelper.DBstruct, s *discordgo.Session) {
+func CheckGuildExists(GID string, DB *gorm.DB, s *discordgo.Session) {
 	guild := coredb.Guild{GID: GID}
 
-	result := DB.Guilds.First(&guild)
+	result := DB.First(&guild)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		initializeServer(GID, DB, s)

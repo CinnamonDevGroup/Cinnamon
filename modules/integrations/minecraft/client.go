@@ -36,10 +36,11 @@ func (c *Client) readPump() {
 			break
 		}
 
-		data.AuthID = c.AuthID
+		data.AuthKey = c.AuthKey
 
 		userMessage, _ := json.Marshal(data)
 		c.hub.broadcast <- userMessage
+		c.hub.client <- c
 	}
 }
 
@@ -98,7 +99,6 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request, s *discordgo.Sess
 	}
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
-	client.AuthID = "aawagga"
 	client.Addr = conn.RemoteAddr().String()
 
 	// Allow collection of memory referenced by the caller by doing all work in
@@ -106,7 +106,6 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request, s *discordgo.Sess
 	go client.writePump()
 	go client.readPump()
 
-	client.send <- []byte("Welcome")
 }
 
 func GenUserId() string {

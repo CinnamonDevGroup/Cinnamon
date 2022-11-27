@@ -31,7 +31,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type User struct {
-	AuthID  string
+	AuthKey string
 	Addr    string
 	EnterAt time.Time
 }
@@ -41,6 +41,7 @@ type chatMessage struct {
 	Message string `json:"message"`
 	Mention string `json:"mention"`
 	Channel string `json:"channel"`
+	Guild   string `json:"guild"`
 }
 
 type playerJoin struct {
@@ -62,7 +63,19 @@ type playerAuthKeySend struct {
 type IncomingData struct {
 	DataType string          `json:"datatype"`
 	Data     json.RawMessage `json:"data"`
-	AuthID   string          `json:"authid"`
+	AuthKey  string          `json:"authkey"`
+}
+
+type authenticate struct {
+	AuthKey        string `json:"authkey"`
+	DefaultChannel string `json:"channel"`
+	GuildID        string `json:"guild"`
+}
+
+type ConnectionStatus struct {
+	AuthKey string `json:"authkey"`
+	GID     string `json:"gid"`
+	Status  int    `json:"status"`
 }
 
 type discordMessage struct {
@@ -81,6 +94,8 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+
+	Authenticated bool
 
 	User
 }

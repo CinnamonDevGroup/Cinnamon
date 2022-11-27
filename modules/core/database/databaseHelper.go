@@ -7,49 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB DBstruct
+func Init() *gorm.DB {
 
-type DBstruct struct {
-	Cinnamon  *gorm.DB
-	Guilds    *gorm.DB
-	Users     *gorm.DB
-	Minecraft *gorm.DB
-}
-
-func Init() DBstruct {
-
-	cinnamondb, err := gorm.Open(sqlite.Open("database/cinnamon"), &gorm.Config{})
+	cinnamondb, err := gorm.Open(sqlite.Open("database/cinnamon.db"), &gorm.Config{})
 
 	if err != nil {
 		panic(err)
 	}
 
-	guildsdb, err := gorm.Open(sqlite.Open("database/guilds"), &gorm.Config{})
+	cinnamondb.AutoMigrate(&coredb.Cinnamon{}, coredb.Guild{}, coredb.User{}, minecraftdb.Minecraft{})
 
-	if err != nil {
-		panic(err)
-	}
-
-	usersdb, err := gorm.Open(sqlite.Open("database/users"), &gorm.Config{})
-
-	if err != nil {
-		panic(err)
-	}
-
-	mcdb, err := gorm.Open(sqlite.Open("database/minecraft"), &gorm.Config{})
-
-	if err != nil {
-		panic(err)
-	}
-
-	cinnamondb.AutoMigrate(&coredb.Cinnamon{})
-	guildsdb.AutoMigrate(&coredb.Guild{})
-	usersdb.AutoMigrate(&coredb.User{})
-	mcdb.AutoMigrate(&minecraftdb.Minecraft{})
-
-	DB.Cinnamon = cinnamondb
-	DB.Guilds = guildsdb
-	DB.Users = usersdb
-	DB.Minecraft = mcdb
-	return DB
+	return cinnamondb
 }

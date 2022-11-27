@@ -1,12 +1,12 @@
 package minecraft
 
 import (
-	databaseHelper "github.com/AngelFluffyOokami/Cinnamon/modules/core/database"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func Init(s *discordgo.Session, DB databaseHelper.DBstruct) {
+func Init(s *discordgo.Session, DB *gorm.DB) {
 	r := gin.Default()
 	hub := newHub()
 	go hub.run(s, DB)

@@ -3,9 +3,10 @@ package minecraft
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
-	databaseHelper "github.com/AngelFluffyOokami/Cinnamon/modules/core/database"
 	"github.com/bwmarrin/discordgo"
+	"gorm.io/gorm"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -16,6 +17,8 @@ type Hub struct {
 
 	// Inbound messages from the clients.
 	broadcast chan []byte
+
+	client chan *Client
 
 	// Register requests from the clients.
 	register chan *Client
@@ -28,68 +31,69 @@ func newHub() *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
+		client:     make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 	}
 }
 
-func (h *Hub) run(s *discordgo.Session, DB databaseHelper.DBstruct) {
+func (h *Hub) run(s *discordgo.Session, DB *gorm.DB) {
 	for {
 		select {
 		case client := <-h.register:
-			clientAuthId := client.AuthID
 
-			fmt.Print("Server Client registered " + clientAuthId)
+			fmt.Print("Server Client registered " + client.Addr)
 
 			h.clients[client] = true
 
 		case client := <-h.unregister:
 
-			clientAuthId := client.AuthID
+			clientAuthKey := client.AuthKey
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 			}
 
-			fmt.Print("Server Client has unregistered " + clientAuthId)
+			fmt.Print("Server Client has unregistered " + clientAuthKey)
 
 		case data := <-h.broadcast:
 			fmt.Print("msg received")
-
-			var fauxMessage discordMessage
-
-			fauxMessage.Channel = "exchannel"
-			fauxMessage.Mention = "exmention"
-			fauxMessage.Message = "exmessage"
-			fauxMessage.User = "exuser"
-			fauxjson, err := json.Marshal(fauxMessage)
-
-			if err != nil {
-				panic(err)
-			}
-
 			var receivedData IncomingData
 			json.Unmarshal(data, &receivedData)
-			authID := receivedData.AuthID
-			for client := range h.clients {
+			client := <-h.client
 
-				if authID == client.AuthID {
+			if client.Authenticated {
 
-					switch receivedData.DataType {
-					case "playerMessage":
-						onPlayerMessage(receivedData.Data, s)
-					case "playerJoin":
-						onPlayerJoin(receivedData.Data, s)
-					}
-					select {
-					case client.send <- fauxjson:
-					default:
-						close(client.send)
-						delete(h.clients, client)
-					}
+				switch receivedData.DataType {
+				case "playerMessage":
+					onPlayerMessage(receivedData.Data, s)
+				case "playerJoin":
+					onPlayerJoin(receivedData.Data, s)
+
 				}
 
+			} else {
+				switch receivedData.DataType {
+				case "authenticate":
+					clientAuthenticate(client, DB, s, h, receivedData.Data)
+				default:
+					connection := ConnectionStatus{
+						AuthKey: "",
+						GID:     "",
+						Status:  http.StatusUnauthorized,
+					}
+					response, err := json.Marshal(connection)
+					if err != nil {
+						panic(err)
+					}
+					client.send <- response
+
+					close(client.send)
+					delete(h.clients, client)
+
+				}
 			}
+
 		}
 	}
 }

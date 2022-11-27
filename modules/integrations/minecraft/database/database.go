@@ -1,16 +1,16 @@
 package minecraftdb
 
 type Minecraft struct {
-	AuthKey string `gorm:"primaryKey"`
-	GID     string `gorm:"primaryKey"`
-	Users   []user `gorm:"serializer:json"`
+	AuthKey        string `gorm:"primaryKey"`
+	GID            string `gorm:"primaryKey"`
+	DefaultChannel string
+	Active         bool
 }
 
-type user struct {
+type User struct {
 	MCUUID     string
 	MCUsername string
 	MCPFP      string
-	UID        string
+	UID        []string
 	AuthKey    string
-	UUID       []string
 }

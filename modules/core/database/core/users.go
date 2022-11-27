@@ -1,5 +1,7 @@
 package coredb
 
+import minecraftdb "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
+
 type perServerPreferences struct {
 	Pronouns         string
 	Nickname         string
@@ -25,6 +27,7 @@ type User struct {
 	UserPrefer      []perUserPreferences   `gorm:"serializer:json"`
 	CurrentServers  []string               `gorm:"serializer:json"`
 	XP              []globalXP             `gorm:"serializer:json"`
+	Minecraft       minecraftdb.User       `gorm:"serializer:json"`
 }
 
 type globalXP struct {
