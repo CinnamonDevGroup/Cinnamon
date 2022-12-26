@@ -5,15 +5,14 @@ import (
 )
 
 type ChatMessage struct {
-	Player  string `json:"player"`
+	UUID    string `json:"uuid"`
 	Message string `json:"message"`
 	Mention string `json:"mention"`
 	Channel string `json:"channel"`
 }
 
 type PlayerJoin struct {
-	Username string `json:"player"`
-	UUID     string `json:"uuid"`
+	UUID string `json:"uuid"`
 }
 
 type Data struct {

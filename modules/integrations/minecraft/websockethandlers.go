@@ -66,7 +66,7 @@ func onPlayerMessage(data Data) {
 	defer commonutils.RecoverPanic("")
 
 	if chatMsg.Mention == "" {
-		_, err := s.ChannelMessageSend("", chatMsg.Player+": "+chatMsg.Message)
+		_, err := s.ChannelMessageSend("", ": "+chatMsg.Message)
 		if err != nil {
 			panic(err)
 		}
@@ -78,14 +78,14 @@ func onPlayerMessage(data Data) {
 			GuildID:   "",
 		}
 
-		_, err := s.ChannelMessageSendReply("", chatMsg.Player+": "+chatMsg.Message, &message)
+		_, err := s.ChannelMessageSendReply("", ": "+chatMsg.Message, &message)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	if config.Debugging {
-		commonutils.LogEvent("Minecraft Player Message Event:\n"+chatMsg.Message+chatMsg.Player, commonutils.LogInfo)
+		commonutils.LogEvent("Minecraft Player Message Event:\n"+chatMsg.Message+chatMsg.UUID, commonutils.LogInfo)
 	}
 }
 
