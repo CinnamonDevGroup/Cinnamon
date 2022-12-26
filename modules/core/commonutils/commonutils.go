@@ -1,8 +1,11 @@
 package commonutils
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"runtime"
 	"time"
 
 	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
@@ -21,14 +24,18 @@ func BabbleWords() string {
 	return key
 }
 
-func initializeServer(GID string, DB *gorm.DB, s *discordgo.Session) {
+func initializeServer(GID string) {
+	defer RecoverPanic("")
+
+	s := <-GetSession
+	DB := <-GetDB
 
 	var JoinedAt []int64
 
 	JoinedAt = append(JoinedAt, time.Now().Unix())
 
 	var MemberCount int
-	guildCheck, err := s.State.Guild(GID)
+	guildCheck, err := s.Guild(GID)
 	if err != nil {
 		MemberCount = 0
 	} else {
@@ -53,18 +60,171 @@ func initializeServer(GID string, DB *gorm.DB, s *discordgo.Session) {
 		},
 	}
 
+	servername := GetGuildName(GID)
+
+	ownername := GetGuildOwnerName(GID)
+
+	message := "Server Join Event: " + servername + " " + ownername + "\n"
+	LogEvent(message, LogInfo)
+
 	result := DB.Create(&guild)
 	fmt.Print(result.Error)
 
 }
 
-func CheckGuildExists(GID string, DB *gorm.DB, s *discordgo.Session) {
+const (
+	LogError    = "ERR"
+	LogWarning  = "WARN"
+	LogInfo     = "INFO"
+	LogUpdate   = "UPDATE"
+	LogFeedback = "FEEDBACK"
+)
+
+func GetGuildName(GID string) string {
+	s := <-GetSession
+	guild, err := s.Guild(GID)
+	if err != nil {
+		return "Undefined. " + GID
+	} else {
+		return guild.Name + " " + GID
+	}
+}
+
+func GetGuildOwnerName(GID string) string {
+	s := <-GetSession
+	g, err := s.Guild(GID)
+	if err != nil {
+		return "Undefined."
+	}
+
+	user, err := s.User(g.OwnerID)
+	if err != nil {
+		return "Undefined. " + g.OwnerID
+	} else {
+		return user.Username + "#" + user.Discriminator + " " + g.OwnerID
+	}
+}
+
+func LogEvent(message string, level string) {
+
+	config := <-GetConfig
+	s := <-GetSession
+	// create the log entry
+	entry := LogEntry{
+		Time:    time.Now(),
+		Message: message,
+		Level:   level,
+	}
+
+	// open the log file
+	logFile, err := os.OpenFile("opossum.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer logFile.Close()
+
+	// marshal the log entry
+	entryJSON, err := json.MarshalIndent(entry, "\n", "\n")
+	if err != nil {
+		panic(err)
+	}
+
+	// write the log entry to the file
+	if _, err := logFile.Write(entryJSON); err != nil {
+		panic(err)
+	}
+	if err := logFile.Sync(); err != nil {
+		panic(err)
+	}
+	switch level {
+	case "INFO":
+		s.ChannelMessageSend(config.InfoChannel, entry.Level+": \n"+entry.Message+"\n"+fmt.Sprint(entry.Time))
+	case "WARN":
+		s.ChannelMessageSend(config.WarnChannel, entry.Level+": \n"+entry.Message+"\n"+fmt.Sprint(entry.Time))
+	case "ERR":
+		s.ChannelMessageSend(config.ErrChannel, entry.Level+": \n"+entry.Message+"\n"+fmt.Sprint(entry.Time))
+	case "UPDATE":
+		s.ChannelMessageSend(config.UpdateChannel, entry.Level+": \n"+entry.Message+"\n"+fmt.Sprint(entry.Time))
+	case "FEEDBACK":
+		s.ChannelMessageSend(config.FeedbackChannel, entry.Level+": \n"+entry.Message)
+	}
+}
+
+var SetConfig = make(chan Data)
+var GetConfig = make(chan Data)
+
+func Config() {
+	var config Data
+	for {
+		select {
+		case config = <-SetConfig:
+		case GetConfig <- config:
+		}
+	}
+
+}
+
+var GetSession = make(chan *discordgo.Session)
+var SetSession = make(chan *discordgo.Session)
+
+func Session() {
+	var session *discordgo.Session
+	for {
+		select {
+		case session = <-SetSession:
+		case GetSession <- session:
+		}
+	}
+
+}
+
+var GetDB = make(chan *gorm.DB)
+var SetDB = make(chan *gorm.DB)
+
+func DB() {
+	var DB *gorm.DB
+	for {
+		select {
+		case DB = <-SetDB:
+		case GetDB <- DB:
+		}
+	}
+}
+
+func RecoverPanic(channelID string) {
+
+	if r := recover(); r != nil {
+
+		s := <-GetSession
+
+		// get the stack trace of the panic
+		tempbuf := make([]byte, 10000)
+		buflength := runtime.Stack(tempbuf, false)
+		var buf []byte
+		if buflength >= 1900 {
+			buf = make([]byte, 1900)
+		} else {
+			buf = make([]byte, buflength)
+		}
+		runtime.Stack(buf, false)
+
+		LogEvent(fmt.Sprintf("Recovering from panic: %v\n Stack trace: %s", r, buf), "ERR")
+		if channelID != "" {
+			s.ChannelMessageSend(channelID, "Error processing command.\nBug report sent to developers.")
+		}
+
+	}
+
+}
+
+func CheckGuildExists(GID string) {
+	DB := <-GetDB
 	guild := coredb.Guild{GID: GID}
 
 	result := DB.First(&guild)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		initializeServer(GID, DB, s)
+		initializeServer(GID)
 
 	} else {
 		return

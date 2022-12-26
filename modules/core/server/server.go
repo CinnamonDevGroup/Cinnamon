@@ -3,14 +3,13 @@ package coreserver
 import (
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
 	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
-	"github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft"
-	"gorm.io/gorm"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-func regenAuthKey(GID string, DB *gorm.DB) string {
+func regenAuthKey(GID string) string {
 
+	DB := <-commonutils.GetDB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -21,21 +20,25 @@ func regenAuthKey(GID string, DB *gorm.DB) string {
 
 	DB.Save(&guild)
 
-	UpdateAuthKeys(GID, DB, guild.AuthKey, oldKey)
+	UpdateAuthKeys(GID, guild.AuthKey, oldKey)
 
 	return guild.AuthKey
 
 }
 
-func UpdateAuthKeys(GID string, DB *gorm.DB, AuthKey string, OldKey string) {
+func UpdateAuthKeys(GID string, AuthKey string, OldKey string) {
 
-	minecraft.RegenAuthKeys(GID, DB, AuthKey, OldKey)
+	//TODO AuthKeyUpdater
+
+	for _, x := range commonutils.AuthKeyUpdater {
+		x(GID, AuthKey, OldKey)
+	}
 
 }
 
-func OnServerJoin(s *discordgo.Session, z *discordgo.GuildCreate, DB *gorm.DB) {
+func OnServerJoin(z *discordgo.GuildCreate) {
 
-	commonutils.CheckGuildExists(z.Guild.ID, DB, s)
+	commonutils.CheckGuildExists(z.Guild.ID)
 }
 
 var (
@@ -52,11 +55,11 @@ var (
 			DefaultMemberPermissions: &admin,
 		},
 	}
-	CommandsHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB){
-		"regenauthkey": func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB) {
-
-			commonutils.CheckGuildExists(i.Interaction.GuildID, DB, s)
-			newKeys := regenAuthKey(i.Interaction.GuildID, DB)
+	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
+		"regenauthkey": func(i *discordgo.InteractionCreate) {
+			s := <-commonutils.GetSession
+			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			newKeys := regenAuthKey(i.Interaction.GuildID)
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -69,9 +72,11 @@ var (
 			}
 
 		},
-		"authkey": func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB) {
+		"authkey": func(i *discordgo.InteractionCreate) {
+			s := <-commonutils.GetSession
+			DB := <-commonutils.GetDB
 
-			commonutils.CheckGuildExists(i.Interaction.GuildID, DB, s)
+			commonutils.CheckGuildExists(i.Interaction.GuildID)
 
 			guild := coredb.Guild{GID: i.Interaction.GuildID}
 

@@ -3,6 +3,7 @@ package discord
 import (
 	"log"
 
+	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -25,5 +26,8 @@ func Init(disToken string) *discordgo.Session {
 	if err != nil {
 		panic(err)
 	}
+	go commonutils.Session()
+	commonutils.SetSession <- s
 	return s
+
 }

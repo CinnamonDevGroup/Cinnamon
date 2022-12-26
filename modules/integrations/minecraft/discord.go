@@ -11,7 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func checkGuildExists(GID string, DB *gorm.DB) bool {
+func checkGuildExists(GID string) bool {
+	DB := <-commonutils.GetDB
 
 	guild := coredb.Guild{GID: GID}
 	DB.First(&guild)
@@ -32,7 +33,9 @@ func checkGuildExists(GID string, DB *gorm.DB) bool {
 
 }
 
-func initializeGuild(GID string, DB *gorm.DB) {
+func initializeGuild(GID string) {
+
+	DB := <-commonutils.GetDB
 
 	guild := coredb.Guild{GID: GID}
 
@@ -48,8 +51,9 @@ func initializeGuild(GID string, DB *gorm.DB) {
 
 }
 
-func unlinkServer(GID string, DB *gorm.DB) {
+func unlinkServer(GID string) {
 
+	DB := <-commonutils.GetDB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -62,7 +66,9 @@ func unlinkServer(GID string, DB *gorm.DB) {
 	DB.Save(&server)
 }
 
-func RegenAuthKeys(GID string, DB *gorm.DB, AuthKey string, OldKey string) {
+func RegenAuthKeys(GID string, AuthKey string, OldKey string) {
+
+	DB := <-commonutils.GetDB
 
 	guild := coredb.Guild{GID: GID}
 	DB.First(&guild)
@@ -96,8 +102,9 @@ func RegenAuthKeys(GID string, DB *gorm.DB, AuthKey string, OldKey string) {
 
 }
 
-func deleteGuildData(GID string, DB *gorm.DB) {
+func deleteGuildData(GID string) {
 
+	DB := <-commonutils.GetDB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -109,7 +116,8 @@ func deleteGuildData(GID string, DB *gorm.DB) {
 	DB.Delete(&server)
 }
 
-func enableGuild(GID string, DB *gorm.DB) string {
+func enableGuild(GID string) string {
+	DB := <-commonutils.GetDB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -148,18 +156,20 @@ var (
 			Description: "Deletes all Minecraft integration data from database and disables Minecraft related functionality.",
 		},
 	}
-	CommandsHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB){
-		"linkminecraftserver": func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB) {
-			commonutils.CheckGuildExists(i.Interaction.GuildID, DB, s)
+	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
+		"linkminecraftserver": func(i *discordgo.InteractionCreate) {
+			DB := <-commonutils.GetDB
+			s := <-commonutils.GetSession
+			commonutils.CheckGuildExists(i.Interaction.GuildID)
 
-			exists := checkGuildExists(i.Interaction.GuildID, DB)
+			exists := checkGuildExists(i.Interaction.GuildID)
 
 			var message string
 			if !exists {
-				initializeGuild(i.Interaction.GuildID, DB)
+				initializeGuild(i.Interaction.GuildID)
 				message = "Minecraft integration enabled.\n"
 			} else {
-				message = enableGuild(i.Interaction.GuildID, DB)
+				message = enableGuild(i.Interaction.GuildID)
 			}
 
 			guild := coredb.Guild{GID: i.Interaction.GuildID}
@@ -182,9 +192,10 @@ var (
 			}
 
 		},
-		"deleteminecraftlink": func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB) {
-			commonutils.CheckGuildExists(i.Interaction.GuildID, DB, s)
-			exists := checkGuildExists(i.Interaction.GuildID, DB)
+		"deleteminecraftlink": func(i *discordgo.InteractionCreate) {
+			s := <-commonutils.GetSession
+			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			exists := checkGuildExists(i.Interaction.GuildID)
 
 			if !exists {
 				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -198,7 +209,7 @@ var (
 					panic(err)
 				}
 			} else {
-				deleteGuildData(i.Interaction.GuildID, DB)
+				deleteGuildData(i.Interaction.GuildID)
 
 				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -215,15 +226,16 @@ var (
 
 		},
 
-		"unlinkminecraftserver": func(s *discordgo.Session, i *discordgo.InteractionCreate, DB *gorm.DB) {
-			commonutils.CheckGuildExists(i.Interaction.GuildID, DB, s)
-			exists := checkGuildExists(i.Interaction.GuildID, DB)
+		"unlinkminecraftserver": func(i *discordgo.InteractionCreate) {
+			s := <-commonutils.GetSession
+			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			exists := checkGuildExists(i.Interaction.GuildID)
 
 			if exists {
 
-				exists = checkGuildExists(i.Interaction.GuildID, DB)
+				exists = checkGuildExists(i.Interaction.GuildID)
 				if exists {
-					unlinkServer(i.Interaction.GuildID, DB)
+					unlinkServer(i.Interaction.GuildID)
 
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,

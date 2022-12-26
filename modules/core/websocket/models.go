@@ -1,0 +1,56 @@
+package websocket
+
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/gorilla/websocket"
+)
+
+type Client struct {
+	Hub *Hub
+
+	// The websocket connection.
+	Conn *websocket.Conn
+
+	// Buffered channel of outbound messages.
+	Send chan []byte
+
+	Authenticated bool
+
+	User
+}
+
+type IncomingData struct {
+	DataType   string          `json:"datatype"`
+	RawData    json.RawMessage `json:"rawdata"`
+	APIVersion int             `json:"version"`
+}
+type User struct {
+	AuthKey    string
+	APIVersion int
+	Addr       string
+	EnterAt    time.Time
+}
+
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+)
+
+var (
+	newline = []byte{'\n'}
+)
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
