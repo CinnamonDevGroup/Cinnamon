@@ -22,7 +22,7 @@ RAW JSON
 ### APIVersion
 API Version being handled by client connecting to the bot. Data sent over the websocket is handled according to API version negotiated.
 #### Valid JSON Data
-Integer
+1
 
 
 ## websocket.datatype: minecraft
