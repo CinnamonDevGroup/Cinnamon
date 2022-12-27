@@ -21,7 +21,7 @@ jobs:
         go-version: 1.19
       
     - name: Install dependencies
-      run: git clone github.com/CinnamonDevGroup/Cinnamon.git &&
+      run: git clone https://github.com/CinnamonDevGroup/Cinnamon.git &&
            go mod tidy
 
 
