@@ -27,7 +27,8 @@ jobs:
 
 
     - name: Build
-      run: go build -tags minecraft -v &&
+      run: cd ./Cinnamon &&
+           go build -tags minecraft -v &&
            env GOOS=windows go build -tags minecraft -v
 
     - name: Upload Compiled Windows Package
