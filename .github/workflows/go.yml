@@ -22,6 +22,7 @@ jobs:
       
     - name: Install dependencies
       run: git clone https://github.com/CinnamonDevGroup/Cinnamon.git &&
+           cd ./Cinnamon &&
            go mod tidy
 
 
