@@ -22,7 +22,8 @@ jobs:
       
     - name: Install dependencies
       run: go mod init github.com/CinnamonDevGroup/Cinnamon &&
-           go mod tidy
+           go mod tidy &&
+           ls -l
 
     - name: Build
       run: go build -tags minecraft -v ./...
