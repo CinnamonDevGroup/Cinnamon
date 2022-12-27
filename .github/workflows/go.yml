@@ -34,11 +34,11 @@ jobs:
     - name: Upload Compiled Windows Package
       uses: actions/upload-artifact@v3
       with:
-        name: cinnamon.exe
-        path: ./cinnamon.exe
+        name: Cinnamon.exe
+        path: ./Cinnamon/Cinnamon.exe
       
     - name: Upload Compiled Linux Package
       uses: actions/upload-artifact@v3
       with:
-        name: cinnamon
-        path: ./cinnamon
+        name: Cinnamon
+        path: ./Cinnamon/Cinnamon
