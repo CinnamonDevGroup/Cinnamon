@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
+	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/websocket"
 	minecraftdb "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
 	"github.com/bwmarrin/discordgo"
@@ -15,25 +16,31 @@ import (
 
 var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket.Hub){
 	"minecraft": func(data websocket.IncomingData, h *websocket.Hub) {
+
 		fmt.Print("msg received")
 		var receivedData Data
 		json.Unmarshal(data.RawData, &receivedData)
-		client := <-h.Client
 
-		if client.Authenticated {
+		if data.Client.Authenticated {
 
+			var cache websocket.ClientCache
+
+			for _, x := range websocket.ClientsCache {
+				if x.UUID == data.Client.UUID {
+					cache = x
+				}
+			}
 			switch receivedData.DataType {
 			case "playermessageevent":
 				onPlayerMessage(receivedData)
 			case "playerjoinevent":
-				onPlayerJoin(receivedData.RawData)
-
+				onPlayerJoin(receivedData.RawData, cache)
 			}
 
 		} else {
 			switch receivedData.DataType {
 			case "authenticate":
-				clientAuthenticate(client, h, receivedData.RawData)
+				clientAuthenticate(data.Client, h, receivedData.RawData)
 			default:
 				connection := ConnectionStatus{
 					AuthKey: "",
@@ -44,10 +51,10 @@ var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket
 				if err != nil {
 					panic(err)
 				}
-				client.Send <- response
+				data.Client.Send <- response
 
-				close(client.Send)
-				delete(h.Clients, client)
+				close(data.Client.Send)
+				delete(h.Clients, data.Client)
 
 			}
 		}
@@ -57,9 +64,9 @@ var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket
 func onPlayerMessage(data Data) {
 
 	m := data.RawData
-	config := <-commonutils.GetConfig
+	config := commonutils.Config
 
-	s := <-commonutils.GetSession
+	s := commonutils.Session
 
 	var chatMsg ChatMessage
 	json.Unmarshal(m, &chatMsg)
@@ -90,9 +97,9 @@ func onPlayerMessage(data Data) {
 }
 
 func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData json.RawMessage) {
-	s := <-commonutils.GetSession
-	DB := <-commonutils.GetDB
-	config := <-commonutils.GetConfig
+	s := commonutils.Session
+	DB := commonutils.DB
+	config := commonutils.Config
 
 	var authData Authenticate
 
@@ -119,6 +126,15 @@ func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData
 		connection.GID = server.GID
 		client.AuthKey = authData.AuthKey
 		client.Authenticated = true
+		newClient := websocket.ClientCache{
+			Client:         client,
+			UUID:           client.UUID,
+			GID:            authData.GuildID,
+			DefaultChannel: authData.DefaultChannel,
+			AuthKey:        authData.AuthKey,
+			Service:        "minecraft",
+		}
+		websocket.ClientsCache = append(websocket.ClientsCache, newClient)
 		_, err := s.ChannelMessageSend(authData.DefaultChannel, "Minecraft server connected.")
 
 		if err != nil {
@@ -145,10 +161,230 @@ func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData
 
 }
 
-func onPlayerJoin(m []byte) {
+func checkPlayerAuth(UUID string, cache websocket.ClientCache) (bool, coredb.Service) {
+	DB := commonutils.DB
+
+	currentUserService := coredb.Service{
+		Service: "minecraft",
+		UUID:    UUID,
+	}
+	result := DB.First(&currentUserService)
+	return !(errors.Is(result.Error, gorm.ErrRecordNotFound)), currentUserService
+
+}
+
+func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
+
+	DB := commonutils.DB
+
+	newUser := coredb.Service{
+		Service: "minecraft",
+		UUID:    UUID,
+	}
+
+	newAuthKey := commonutils.BabbleWords()
+
+	newUser.AuthKey = newAuthKey
+
+	DB.Save(&newUser)
+
+	kickAuth := kickForAuth{
+		UUID:    UUID,
+		AuthKey: newUser.AuthKey,
+	}
+	AuthKick, err := json.Marshal(kickAuth)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+	OutData := OutboundData{
+		DataType: AuthKickEvent,
+		RawData:  AuthKick,
+		API:      cache.Client.APIVersion,
+	}
+	response, err := json.Marshal(OutData)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+	cache.Client.Send <- response
+
+}
+
+func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
+	DB := commonutils.DB
+
+	currentUser := coredb.Service{
+		Service: "minecraft",
+		UUID:    UUID,
+	}
+	DB.First(&currentUser)
+
+	KickAuth := kickForAuth{
+		UUID:    UUID,
+		AuthKey: currentUser.AuthKey,
+	}
+	AuthKick, err := json.Marshal(KickAuth)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+
+	OutData := OutboundData{
+		DataType: AuthKickEvent,
+		RawData:  AuthKick,
+		API:      Cache.Client.APIVersion,
+	}
+	response, err := json.Marshal(OutData)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+
+	Cache.Client.Send <- response
+}
+
+func DecideAuth(UUID string, Cache websocket.ClientCache) {
+	DB := commonutils.DB
+	s := commonutils.Session
+
+	currentUserService := coredb.Service{
+		Service: "minecraft",
+		UUID:    UUID,
+	}
+	DB.First(&currentUserService)
+
+	guilds, err := s.UserGuilds(100, "", "")
+
+	if err != nil {
+		commonutils.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		return
+	}
+
+	for {
+		if len(guilds) == 100 {
+			newGuilds, err := s.UserGuilds(100, "", guilds[99].ID)
+			if err != nil {
+				commonutils.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), commonutils.LogError)
+				break
+			}
+			for {
+				guilds = append(guilds, newGuilds...)
+				if len(newGuilds) == 100 {
+					oldGuild := newGuilds[99]
+					newGuilds = nil
+					newGuilds, err = s.UserGuilds(100, "", oldGuild.ID)
+					if err != nil {
+						commonutils.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), commonutils.LogError)
+						break
+					}
+				} else {
+					break
+				}
+			}
+		} else {
+			break
+		}
+	}
+
+	found := false
+	for _, x := range guilds {
+		if x.ID == Cache.GID {
+			found = true
+		}
+	}
+
+	user, _ := s.User(currentUserService.UID)
+
+	if found {
+		authSuccess(UUID, user.Username, Cache)
+	} else {
+		authFail(UUID, Cache)
+	}
+
+}
+
+func authFail(UUID string, Cache websocket.ClientCache) {
+	FailAuth := kickForNotOnServer{
+		UUID: UUID,
+	}
+	data, err := json.Marshal(FailAuth)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+
+	responsedata := OutboundData{
+		DataType: notFoundEvent,
+		RawData:  data,
+		API:      Cache.Client.APIVersion,
+	}
+
+	response, err := json.Marshal(responsedata)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+	Cache.Client.Send <- response
+
+}
+
+func authSuccess(UUID string, username string, Cache websocket.ClientCache) {
+	AuthSuccess := playerAuthSuccessful{
+		UUID:     UUID,
+		Username: username,
+	}
+
+	data, err := json.Marshal(AuthSuccess)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+
+	responsedata := OutboundData{
+		DataType: playerAuthEvent,
+		RawData:  data,
+		API:      Cache.Client.APIVersion,
+	}
+	response, err := json.Marshal(responsedata)
+	if err != nil {
+		if commonutils.Config.Debugging {
+			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		}
+		return
+	}
+
+	Cache.Client.Send <- response
+}
+
+func onPlayerJoin(m []byte, Cache websocket.ClientCache) {
 
 	var playerJoined PlayerJoin
 	json.Unmarshal(m, &playerJoined)
-	defer commonutils.RecoverPanic("")
+	defer commonutils.RecoverPanic(Cache.DefaultChannel)
 
+	exists, user := checkPlayerAuth(playerJoined.UUID, Cache)
+	if !exists {
+		KickNewPlayerAuth(playerJoined.UUID, Cache)
+		return
+	}
+	if user.UID == "" {
+		kickPlayerAuth(playerJoined.UUID, Cache)
+		return
+	}
+	DecideAuth(playerJoined.UUID, Cache)
 }

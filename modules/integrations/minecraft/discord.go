@@ -12,7 +12,7 @@ import (
 )
 
 func checkGuildExists(GID string) bool {
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 
 	guild := coredb.Guild{GID: GID}
 	DB.First(&guild)
@@ -35,7 +35,7 @@ func checkGuildExists(GID string) bool {
 
 func initializeGuild(GID string) {
 
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 
 	guild := coredb.Guild{GID: GID}
 
@@ -53,7 +53,7 @@ func initializeGuild(GID string) {
 
 func unlinkServer(GID string) {
 
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -68,7 +68,7 @@ func unlinkServer(GID string) {
 
 func RegenAuthKeys(GID string, AuthKey string, OldKey string) {
 
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 
 	guild := coredb.Guild{GID: GID}
 	DB.First(&guild)
@@ -104,7 +104,7 @@ func RegenAuthKeys(GID string, AuthKey string, OldKey string) {
 
 func deleteGuildData(GID string) {
 
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -117,7 +117,7 @@ func deleteGuildData(GID string) {
 }
 
 func enableGuild(GID string) string {
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -158,8 +158,8 @@ var (
 	}
 	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
 		"linkminecraftserver": func(i *discordgo.InteractionCreate) {
-			DB := <-commonutils.GetDB
-			s := <-commonutils.GetSession
+			DB := commonutils.DB
+			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 
 			exists := checkGuildExists(i.Interaction.GuildID)
@@ -193,7 +193,7 @@ var (
 
 		},
 		"deleteminecraftlink": func(i *discordgo.InteractionCreate) {
-			s := <-commonutils.GetSession
+			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 			exists := checkGuildExists(i.Interaction.GuildID)
 
@@ -227,7 +227,7 @@ var (
 		},
 
 		"unlinkminecraftserver": func(i *discordgo.InteractionCreate) {
-			s := <-commonutils.GetSession
+			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 			exists := checkGuildExists(i.Interaction.GuildID)
 

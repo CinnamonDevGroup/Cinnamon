@@ -1,4 +1,4 @@
-package minecraftdb
+package minecraft
 
 type Minecraft struct {
 	AuthKey        string `gorm:"primaryKey"`
@@ -11,6 +11,11 @@ type User struct {
 	MCUUID     string
 	MCUsername string
 	MCPFP      string
-	UID        []string
-	AuthKey    string
+	CurrentID  ID
+	OldIDs     []ID
+}
+
+type ID struct {
+	UID  string
+	UUID string
 }

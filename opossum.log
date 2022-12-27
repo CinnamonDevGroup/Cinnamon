@@ -1,0 +1,166 @@
+{
+
+
+"Time": "2022-12-26T17:16:38.9190209-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:64873 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:18:19.2176345-08:00",
+
+
+"Message": "WS Unexpected Disconnect Event: read tcp 127.0.0.1:8080-\u003e127.0.0.1:49969: use of closed network connection",
+
+
+"Level": "WARN"
+
+}{
+
+
+"Time": "2022-12-26T17:18:23.01199-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59093 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:19:39.9719248-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59168 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:20:43.3951035-08:00",
+
+
+"Message": "WS Unexpected Disconnect Event: read tcp 127.0.0.1:8080-\u003e127.0.0.1:59168: i/o timeout",
+
+
+"Level": "WARN"
+
+}{
+
+
+"Time": "2022-12-26T17:20:58.2145037-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59255 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:22:56.9935521-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59393 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:25:34.6308352-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59562 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:25:35.1210173-08:00",
+
+
+"Message": "WS Unexpected Disconnect Event: websocket: close 1000 (normal)",
+
+
+"Level": "WARN"
+
+}{
+
+
+"Time": "2022-12-26T17:25:35.2117386-08:00",
+
+
+"Message": "WritePump NextWriter Error Event: websocket: close sent",
+
+
+"Level": "ERR"
+
+}{
+
+
+"Time": "2022-12-26T17:25:38.451905-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59567 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:25:40.716829-08:00",
+
+
+"Message": "WS Unexpected Disconnect Event: websocket: close 1000 (normal)",
+
+
+"Level": "WARN"
+
+}{
+
+
+"Time": "2022-12-26T17:25:43.3018868-08:00",
+
+
+"Message": "WS Unexpected Disconnect Event: read tcp 127.0.0.1:8080-\u003e127.0.0.1:59569: use of closed network connection",
+
+
+"Level": "WARN"
+
+}{
+
+
+"Time": "2022-12-26T17:25:47.3373272-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:59577 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}{
+
+
+"Time": "2022-12-26T17:30:58.0078383-08:00",
+
+
+"Message": "ClientAuthenticate Client Register Event: 127.0.0.1:60267 802454131713245205 flower-sacred-morale-expand-ethics-course",
+
+
+"Level": "INFO"
+
+}

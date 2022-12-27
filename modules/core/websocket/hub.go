@@ -3,6 +3,8 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -12,7 +14,7 @@ type Hub struct {
 	Clients map[*Client]bool
 
 	// Inbound messages from the clients.
-	Broadcast chan []byte
+	Broadcast chan IncomingData
 
 	Client chan *Client
 
@@ -23,9 +25,11 @@ type Hub struct {
 	Unregister chan *Client
 }
 
+var WriteToWebsocket = make(chan ClientCache)
+
 func newHub() *Hub {
 	return &Hub{
-		Broadcast:  make(chan []byte),
+		Broadcast:  make(chan IncomingData),
 		Register:   make(chan *Client),
 		Client:     make(chan *Client),
 		Unregister: make(chan *Client),
@@ -33,26 +37,34 @@ func newHub() *Hub {
 	}
 }
 
-var GetWebsocketHandlers = make(chan map[string]func(receivedData IncomingData, h *Hub))
-var SetWebsocketHandlers = make(chan map[string]func(receivedData IncomingData, h *Hub))
+var WebsocketHandlers map[string]func(receivedData IncomingData, h *Hub)
 
-func Websocket() {
-	var Handlers map[string]func(receivedData IncomingData, h *Hub)
-	for {
-		select {
-		case Handlers = <-SetWebsocketHandlers:
-		case GetWebsocketHandlers <- Handlers:
-		}
-	}
+type ClientCache struct {
+	Client         *Client
+	UUID           string
+	OutboundData   OutboundData
+	GID            string
+	DefaultChannel string
+	AuthKey        string
+	Service        string
 }
 
+var ClientsCache []ClientCache
+
 func (h *Hub) run() {
-	Handlers := <-GetWebsocketHandlers
+	Handlers := WebsocketHandlers
 	for {
 		select {
 		case client := <-h.Register:
 
 			fmt.Print("Server Client registered " + client.Addr)
+
+			NewClient := ClientCache{
+				Client: client,
+				UUID:   client.User.UUID,
+			}
+
+			ClientsCache = append(ClientsCache, NewClient)
 
 			h.Clients[client] = true
 
@@ -67,12 +79,16 @@ func (h *Hub) run() {
 			fmt.Print("Server Client has unregistered " + clientAuthKey)
 
 		case data := <-h.Broadcast:
-			var incomingData IncomingData
-			json.Unmarshal(data, &incomingData)
 
-			if u, ok := Handlers[incomingData.DataType]; ok {
-				u(incomingData, h)
+			if u, ok := Handlers[data.DataType]; ok {
+				u(data, h)
 			}
+		case outdata := <-WriteToWebsocket:
+			jsonvar, err := json.Marshal(outdata.OutboundData)
+			if err != nil {
+				commonutils.LogEvent("Websocket Client Send Error Event: "+fmt.Sprint(err), commonutils.LogError)
+			}
+			outdata.Client.Send <- jsonvar
 		}
 	}
 }

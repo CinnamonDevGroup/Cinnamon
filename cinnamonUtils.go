@@ -23,7 +23,7 @@ const (
 )
 
 func ReadJSON(filename string) (commonutils.Data, error) {
-	config := <-commonutils.GetConfig
+	commonutils.Config = config
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return config, err

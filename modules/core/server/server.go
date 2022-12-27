@@ -9,7 +9,7 @@ import (
 
 func regenAuthKey(GID string) string {
 
-	DB := <-commonutils.GetDB
+	DB := commonutils.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -57,7 +57,7 @@ var (
 	}
 	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
 		"regenauthkey": func(i *discordgo.InteractionCreate) {
-			s := <-commonutils.GetSession
+			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 			newKeys := regenAuthKey(i.Interaction.GuildID)
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -73,8 +73,8 @@ var (
 
 		},
 		"authkey": func(i *discordgo.InteractionCreate) {
-			s := <-commonutils.GetSession
-			DB := <-commonutils.GetDB
+			s := commonutils.Session
+			DB := commonutils.DB
 
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 

@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -21,7 +20,7 @@ import (
 
 func (c *Client) readPump() {
 	defer commonutils.RecoverPanic("")
-	config := <-commonutils.GetConfig
+	config := commonutils.Config
 	defer func() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
@@ -37,26 +36,26 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-
-		userMessage, err := json.Marshal(data)
+		data.Client = c
 		if err != nil {
 			if config.Debugging {
 				commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
 			}
 		}
-		c.Hub.Broadcast <- userMessage
-		c.Hub.Client <- c
+		c.Hub.Broadcast <- data
 	}
 }
 
-// writePump pumps messages from the hub to the websocket connection.
-//
-// A goroutine running writePump is started for each connection. The
-// application ensures that there is at most one writer to a connection by
-// executing all writes from this goroutine.
+/*
+writePump pumps messages from the hub to the websocket connection.
+
+A goroutine running writePump is started for each connection. The
+application ensures that there is at most one writer to a connection by
+executing all writes from this goroutine.
+*/
 func (c *Client) writePump() {
 	defer commonutils.RecoverPanic("")
-	config := <-commonutils.GetConfig
+	config := commonutils.Config
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -128,7 +127,7 @@ func (c *Client) writePump() {
 // serveWs handles websocket requests from the peer.
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	defer commonutils.RecoverPanic("")
-	config := <-commonutils.GetConfig
+	config := commonutils.Config
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		if config.Debugging {
@@ -139,6 +138,8 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{Hub: hub, Conn: conn, Send: make(chan []byte, 256)}
 	client.Hub.Register <- client
 	client.Addr = conn.RemoteAddr().String()
+	client.UUID = GenUserId()
+	client.User.UUID = client.UUID
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

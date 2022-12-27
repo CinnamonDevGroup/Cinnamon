@@ -1,6 +1,6 @@
 package coredb
 
-import minecraftdb "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
+import "encoding/json"
 
 type perServerPreferences struct {
 	Pronouns         string
@@ -22,12 +22,19 @@ type User struct {
 	DefaultNickname string
 	DefaultAffect   bool
 	UID             string                 `gorm:"primaryKey"`
-	UUID            string                 `gorm:"primaryKey"`
 	ServerPrefer    []perServerPreferences `gorm:"serializer:json"`
 	UserPrefer      []perUserPreferences   `gorm:"serializer:json"`
 	CurrentServers  []string               `gorm:"serializer:json"`
 	XP              []globalXP             `gorm:"serializer:json"`
-	Minecraft       minecraftdb.User       `gorm:"serializer:json"`
+	Services        []Service              `gorm:"serializer:json"`
+}
+
+type Service struct {
+	Service string `gorm:"primaryKey"`
+	UUID    string `gorm:"primaryKey"`
+	Data    json.RawMessage
+	UID     string
+	AuthKey string
 }
 
 type globalXP struct {

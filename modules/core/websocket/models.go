@@ -25,12 +25,21 @@ type IncomingData struct {
 	DataType   string          `json:"datatype"`
 	RawData    json.RawMessage `json:"rawdata"`
 	APIVersion int             `json:"version"`
+	Client     *Client
+}
+type OutboundData struct {
+	DataType   string          `json:"datatype"`
+	RawData    json.RawMessage `json:"rawdata"`
+	APIVersion int             `json:"version"`
+	UUID       string
 }
 type User struct {
 	AuthKey    string
 	APIVersion int
+	Service    string
 	Addr       string
 	EnterAt    time.Time
+	UUID       string
 }
 
 const (

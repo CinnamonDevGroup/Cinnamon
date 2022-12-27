@@ -26,8 +26,8 @@ func Init(disToken string) *discordgo.Session {
 	if err != nil {
 		panic(err)
 	}
-	go commonutils.Session()
-	commonutils.SetSession <- s
+
+	commonutils.Session = s
 	return s
 
 }

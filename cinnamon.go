@@ -27,19 +27,19 @@ var off = make(chan bool)
 var err error
 
 func init() {
-	go commonutils.Config()
-	go websocket.Websocket()
-	go commonutils.DB()
+
 	CreateOrUpdateJSON("config.json")
 	beautifyJSONFile("config.json")
 	config, err = ReadJSON("config.json")
-	commonutils.SetConfig <- config
+	commonutils.Config = config
 	if err != nil {
 		panic(err)
 	}
 	DB = databaseHelper.Init()
-	commonutils.SetDB <- DB
+	commonutils.DB = DB
 	s = discord.Init(config.Token)
+
+	commonutils.Session = s
 
 	allCommands = append(allCommands, coreserver.Commands...)
 	for k, v := range coreserver.CommandsHandlers {
@@ -48,7 +48,7 @@ func init() {
 }
 
 func main() {
-	websocket.SetWebsocketHandlers <- allWebsocketHandlers
+	websocket.WebsocketHandlers = allWebsocketHandlers
 	go websocket.Init()
 	for _, x := range DBMigrate {
 		x()

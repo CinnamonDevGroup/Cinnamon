@@ -27,8 +27,7 @@ func BabbleWords() string {
 func initializeServer(GID string) {
 	defer RecoverPanic("")
 
-	s := <-GetSession
-	DB := <-GetDB
+	s := Session
 
 	var JoinedAt []int64
 
@@ -64,7 +63,7 @@ func initializeServer(GID string) {
 
 	ownername := GetGuildOwnerName(GID)
 
-	message := "Server Join Event: " + servername + " " + ownername + "\n"
+	message := "Server Init Event: " + servername + " " + ownername + "\n"
 	LogEvent(message, LogInfo)
 
 	result := DB.Create(&guild)
@@ -81,7 +80,7 @@ const (
 )
 
 func GetGuildName(GID string) string {
-	s := <-GetSession
+	s := Session
 	guild, err := s.Guild(GID)
 	if err != nil {
 		return "Undefined. " + GID
@@ -91,7 +90,7 @@ func GetGuildName(GID string) string {
 }
 
 func GetGuildOwnerName(GID string) string {
-	s := <-GetSession
+	s := Session
 	g, err := s.Guild(GID)
 	if err != nil {
 		return "Undefined."
@@ -107,8 +106,8 @@ func GetGuildOwnerName(GID string) string {
 
 func LogEvent(message string, level string) {
 
-	config := <-GetConfig
-	s := <-GetSession
+	config := Config
+	s := Session
 	// create the log entry
 	entry := LogEntry{
 		Time:    time.Now(),
@@ -150,52 +149,17 @@ func LogEvent(message string, level string) {
 	}
 }
 
-var SetConfig = make(chan Data)
-var GetConfig = make(chan Data)
+var Config Data
 
-func Config() {
-	var config Data
-	for {
-		select {
-		case config = <-SetConfig:
-		case GetConfig <- config:
-		}
-	}
+var Session *discordgo.Session
 
-}
-
-var GetSession = make(chan *discordgo.Session)
-var SetSession = make(chan *discordgo.Session)
-
-func Session() {
-	var session *discordgo.Session
-	for {
-		select {
-		case session = <-SetSession:
-		case GetSession <- session:
-		}
-	}
-
-}
-
-var GetDB = make(chan *gorm.DB)
-var SetDB = make(chan *gorm.DB)
-
-func DB() {
-	var DB *gorm.DB
-	for {
-		select {
-		case DB = <-SetDB:
-		case GetDB <- DB:
-		}
-	}
-}
+var DB *gorm.DB
 
 func RecoverPanic(channelID string) {
 
 	if r := recover(); r != nil {
 
-		s := <-GetSession
+		s := Session
 
 		// get the stack trace of the panic
 		tempbuf := make([]byte, 10000)
@@ -218,12 +182,13 @@ func RecoverPanic(channelID string) {
 }
 
 func CheckGuildExists(GID string) {
-	DB := <-GetDB
+
 	guild := coredb.Guild{GID: GID}
 
 	result := DB.First(&guild)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+
 		initializeServer(GID)
 
 	} else {
