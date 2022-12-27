@@ -1,24 +1,24 @@
-package minecraft
+package minecraftAPIv1
 
 import "encoding/json"
 
 const AuthKickEvent = "playerauthkickevent"
 
-type kickForAuth struct {
+type KickForAuth struct {
 	UUID    string `json:"uuid"`
 	AuthKey string `json:"authkey"`
 }
 
-const playerAuthEvent = "playerauthevent"
+const PlayerAuthEvent = "playerauthevent"
 
-type playerAuthSuccessful struct {
+type PlayerAuthSuccessful struct {
 	UUID     string `json:"uuid"`
 	Username string `json:"username"`
 }
 
-const notFoundEvent = "usernotfoundevent"
+const NotFoundEvent = "usernotfoundevent"
 
-type kickForNotOnServer struct {
+type KickForNotOnServer struct {
 	UUID string `json:"uuid"`
 }
 

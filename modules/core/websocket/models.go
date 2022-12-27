@@ -21,6 +21,20 @@ type Client struct {
 	User
 }
 
+const APINegotiate = "negotiateapi"
+
+const maxAPI = 1
+
+type NegotiateAPI struct {
+	APIVersion int `json:"version"`
+}
+
+type ConnectionStatus struct {
+	AuthKey string `json:"authkey"`
+	GID     string `json:"gid"`
+	Status  int    `json:"status"`
+}
+
 type IncomingData struct {
 	DataType   string          `json:"datatype"`
 	RawData    json.RawMessage `json:"rawdata"`

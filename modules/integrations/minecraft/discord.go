@@ -158,6 +158,7 @@ var (
 	}
 	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
 		"linkminecraftserver": func(i *discordgo.InteractionCreate) {
+			commonutils.RecoverPanic(i.Interaction.ChannelID)
 			DB := commonutils.DB
 			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
@@ -193,6 +194,7 @@ var (
 
 		},
 		"deleteminecraftlink": func(i *discordgo.InteractionCreate) {
+			commonutils.RecoverPanic(i.Interaction.ChannelID)
 			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 			exists := checkGuildExists(i.Interaction.GuildID)
@@ -227,6 +229,7 @@ var (
 		},
 
 		"unlinkminecraftserver": func(i *discordgo.InteractionCreate) {
+			commonutils.RecoverPanic(i.Interaction.ChannelID)
 			s := commonutils.Session
 			commonutils.CheckGuildExists(i.Interaction.GuildID)
 			exists := checkGuildExists(i.Interaction.GuildID)

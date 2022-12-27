@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
 )
@@ -79,6 +80,34 @@ func (h *Hub) run() {
 			fmt.Print("Server Client has unregistered " + clientAuthKey)
 
 		case data := <-h.Broadcast:
+			if data.APIVersion == 0 {
+
+				if data.DataType == APINegotiate {
+					var apiResponse NegotiateAPI
+					var api NegotiateAPI
+					json.Unmarshal(data.RawData, &api)
+					if maxAPI <= api.APIVersion {
+						apiResponse.APIVersion = maxAPI
+
+					} else if maxAPI > api.APIVersion {
+						apiResponse.APIVersion = api.APIVersion
+
+					}
+					response, _ := json.Marshal(apiResponse)
+					data.Client.Send <- response
+				} else {
+					connection := ConnectionStatus{
+						AuthKey: "",
+						GID:     "",
+						Status:  http.StatusBadRequest,
+					}
+					response, _ := json.Marshal(connection)
+					data.Client.Send <- response
+
+					close(data.Client.Send)
+					delete(h.Clients, data.Client)
+				}
+			}
 
 			if u, ok := Handlers[data.DataType]; ok {
 				u(data, h)
