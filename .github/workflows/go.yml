@@ -21,15 +21,15 @@ jobs:
         go-version: 1.19
       
     - name: Install dependencies
-      run: go mod init github.com/CinnamonDevGroup/Cinnamon
-           go get .
-           go get github.com/tjarratt/babble
-           go get gorm.io/gorm
-           go get github.com/gorilla/websocket
-           go get github.com/google/uuid
-           go get github.com/glebarez/sqlite
-           go get github.com/gin-gonic/gin
-           go get github.com/bwmarrin/discordgo
+      run: go mod init github.com/CinnamonDevGroup/Cinnamon &&
+           go get . &&
+           go get github.com/tjarratt/babble &&
+           go get gorm.io/gorm &&
+           go get github.com/gorilla/websocket &&
+           go get github.com/google/uuid &&
+           go get github.com/glebarez/sqlite &&
+           go get github.com/gin-gonic/gin &&
+           go get github.com/bwmarrin/discordgo &&
 
     - name: Build
       run: go build -tags minecraft -v ./...
