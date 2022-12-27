@@ -21,10 +21,22 @@ jobs:
         go-version: 1.19
       
     - name: Install dependencies
-      run: go mod init github.com/CinnamonDevGroup/Cinnamon &&
-           go mod tidy &&
-           ls -l
+      run: git clone github.com/CinnamonDevGroup/Cinnamon &&
+           go mod tidy
+
 
     - name: Build
-      run: go build -tags minecraft -v ./...
+      run: go build -tags minecraft -v &&
+           env GOOS=windows go build -tags minecraft -v
 
+    - name: Upload Compiled Windows Package
+      uses: actions/upload-artifact@v3
+      with:
+        name: cinnamon.exe
+        path: cinnamon.exe
+      
+    - name: Upload Compiled Linux Package
+      uses: actions/upload-artifact@v3
+      with:
+        name: cinnamon
+        path: cinnamon
