@@ -21,7 +21,7 @@ jobs:
         go-version: 1.19
       
     - name: Install dependencies
-      run: git clone github.com/CinnamonDevGroup/Cinnamon &&
+      run: git clone github.com/CinnamonDevGroup/Cinnamon.git &&
            go mod tidy
 
 
@@ -33,10 +33,10 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: cinnamon.exe
-        path: cinnamon.exe
+        path: ./cinnamon.exe
       
     - name: Upload Compiled Linux Package
       uses: actions/upload-artifact@v3
       with:
         name: cinnamon
-        path: cinnamon
+        path: ./cinnamon
