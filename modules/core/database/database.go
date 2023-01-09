@@ -1,4 +1,4 @@
-package databaseHelper
+package database
 
 import (
 	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"

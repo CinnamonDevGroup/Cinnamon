@@ -138,7 +138,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{Hub: hub, Conn: conn, Send: make(chan []byte, 256)}
 	client.Hub.Register <- client
 	client.Addr = conn.RemoteAddr().String()
-	client.UUID = GenUserId()
+	client.UUID = GenUserID()
 	client.User.UUID = client.UUID
 
 	// Allow collection of memory referenced by the caller by doing all work in
@@ -148,7 +148,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 }
 
-func GenUserId() string {
+func GenUserID() string {
 	uid := uuid.NewString()
 	return uid
 }

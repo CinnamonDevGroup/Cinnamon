@@ -11,6 +11,7 @@ import (
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/discord"
 	coreserver "github.com/AngelFluffyOokami/Cinnamon/modules/core/server"
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/websocket"
+	"github.com/AngelFluffyOokami/Cinnamon/modules/integrations/personalization/personalization"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 )
@@ -28,6 +29,7 @@ var err error
 
 func init() {
 
+	go personalization.InitPersonalization()
 	CreateOrUpdateJSON("config.json")
 	beautifyJSONFile("config.json")
 	config, err = ReadJSON("config.json")

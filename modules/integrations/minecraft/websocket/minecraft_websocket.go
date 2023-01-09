@@ -1,4 +1,4 @@
-package minecraft
+package minecraft_websocket
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
 	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/websocket"
-	minecraftAPIv1 "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/API/v1"
-	minecraftdb "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
+	minecraft_api_v1 "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/API/v1"
+	minecraft_db "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 )
@@ -19,7 +19,7 @@ var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket
 	"minecraft": func(data websocket.IncomingData, h *websocket.Hub) {
 
 		fmt.Print("msg received")
-		var receivedData minecraftAPIv1.Data
+		var receivedData minecraft_api_v1.Data
 		json.Unmarshal(data.RawData, &receivedData)
 
 		if data.Client.Authenticated {
@@ -43,7 +43,7 @@ var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket
 			case "authenticate":
 				clientAuthenticate(data.Client, h, receivedData.RawData)
 			default:
-				connection := minecraftAPIv1.ConnectionStatus{
+				connection := minecraft_api_v1.ConnectionStatus{
 					AuthKey: "",
 					GID:     "",
 					Status:  http.StatusUnauthorized,
@@ -62,14 +62,14 @@ var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket
 	},
 }
 
-func onPlayerMessage(data minecraftAPIv1.Data) {
+func onPlayerMessage(data minecraft_api_v1.Data) {
 
 	m := data.RawData
 	config := commonutils.Config
 
 	s := commonutils.Session
 
-	var chatMsg minecraftAPIv1.ChatMessage
+	var chatMsg minecraft_api_v1.ChatMessage
 	json.Unmarshal(m, &chatMsg)
 	defer commonutils.RecoverPanic("")
 
@@ -102,15 +102,15 @@ func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData
 	DB := commonutils.DB
 	config := commonutils.Config
 
-	var authData minecraftAPIv1.Authenticate
+	var authData minecraft_api_v1.Authenticate
 
 	json.Unmarshal(responseData, &authData)
 	defer commonutils.RecoverPanic(authData.DefaultChannel)
-	connection := minecraftAPIv1.ConnectionStatus{
+	connection := minecraft_api_v1.ConnectionStatus{
 		AuthKey: authData.AuthKey,
 	}
 
-	server := minecraftdb.Minecraft{AuthKey: authData.AuthKey, GID: authData.GuildID}
+	server := minecraft_db.Minecraft{AuthKey: authData.AuthKey, GID: authData.GuildID}
 
 	result := DB.First(&server)
 
@@ -189,7 +189,7 @@ func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
 
 	DB.Save(&newUser)
 
-	kickAuth := minecraftAPIv1.KickForAuth{
+	kickAuth := minecraft_api_v1.KickForAuth{
 		UUID:    UUID,
 		AuthKey: newUser.AuthKey,
 	}
@@ -200,8 +200,8 @@ func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
 		}
 		return
 	}
-	OutData := minecraftAPIv1.OutboundData{
-		DataType: minecraftAPIv1.AuthKickEvent,
+	OutData := minecraft_api_v1.OutboundData{
+		DataType: minecraft_api_v1.AuthKickEvent,
 		RawData:  AuthKick,
 		API:      cache.Client.APIVersion,
 	}
@@ -225,7 +225,7 @@ func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
 	}
 	DB.First(&currentUser)
 
-	KickAuth := minecraftAPIv1.KickForAuth{
+	KickAuth := minecraft_api_v1.KickForAuth{
 		UUID:    UUID,
 		AuthKey: currentUser.AuthKey,
 	}
@@ -237,8 +237,8 @@ func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
 		return
 	}
 
-	OutData := minecraftAPIv1.OutboundData{
-		DataType: minecraftAPIv1.AuthKickEvent,
+	OutData := minecraft_api_v1.OutboundData{
+		DataType: minecraft_api_v1.AuthKickEvent,
 		RawData:  AuthKick,
 		API:      Cache.Client.APIVersion,
 	}
@@ -314,7 +314,7 @@ func DecideAuth(UUID string, Cache websocket.ClientCache) {
 }
 
 func authFail(UUID string, Cache websocket.ClientCache) {
-	FailAuth := minecraftAPIv1.KickForNotOnServer{
+	FailAuth := minecraft_api_v1.KickForNotOnServer{
 		UUID: UUID,
 	}
 	data, err := json.Marshal(FailAuth)
@@ -325,8 +325,8 @@ func authFail(UUID string, Cache websocket.ClientCache) {
 		return
 	}
 
-	responsedata := minecraftAPIv1.OutboundData{
-		DataType: minecraftAPIv1.NotFoundEvent,
+	responsedata := minecraft_api_v1.OutboundData{
+		DataType: minecraft_api_v1.NotFoundEvent,
 		RawData:  data,
 		API:      Cache.Client.APIVersion,
 	}
@@ -343,7 +343,7 @@ func authFail(UUID string, Cache websocket.ClientCache) {
 }
 
 func authSuccess(UUID string, username string, Cache websocket.ClientCache) {
-	AuthSuccess := minecraftAPIv1.PlayerAuthSuccessful{
+	AuthSuccess := minecraft_api_v1.PlayerAuthSuccessful{
 		UUID:     UUID,
 		Username: username,
 	}
@@ -356,8 +356,8 @@ func authSuccess(UUID string, username string, Cache websocket.ClientCache) {
 		return
 	}
 
-	responsedata := minecraftAPIv1.OutboundData{
-		DataType: minecraftAPIv1.PlayerAuthEvent,
+	responsedata := minecraft_api_v1.OutboundData{
+		DataType: minecraft_api_v1.PlayerAuthEvent,
 		RawData:  data,
 		API:      Cache.Client.APIVersion,
 	}
@@ -374,7 +374,7 @@ func authSuccess(UUID string, username string, Cache websocket.ClientCache) {
 
 func onPlayerJoin(m []byte, Cache websocket.ClientCache) {
 
-	var playerJoined minecraftAPIv1.PlayerJoin
+	var playerJoined minecraft_api_v1.PlayerJoin
 	json.Unmarshal(m, &playerJoined)
 	defer commonutils.RecoverPanic(Cache.DefaultChannel)
 

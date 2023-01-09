@@ -65,13 +65,9 @@ const (
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
 )
 
-var (
-	newline = []byte{'\n'}
-)
+var newline = []byte{'\n'}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,

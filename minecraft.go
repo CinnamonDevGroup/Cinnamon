@@ -1,6 +1,3 @@
-//go:build minecraft
-// +build minecraft
-
 package main
 
 import (

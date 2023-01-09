@@ -1,4 +1,4 @@
-package minecraftAPIv1
+package minecraft_api_v1
 
 import "encoding/json"
 

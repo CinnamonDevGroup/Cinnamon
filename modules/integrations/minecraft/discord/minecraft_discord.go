@@ -1,4 +1,4 @@
-package minecraft
+package minecraft_discord
 
 import (
 	"errors"

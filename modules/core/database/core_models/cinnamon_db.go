@@ -1,16 +1,14 @@
-package coredb
+package core_models
 
-func Init() {
-
-}
+import "encoding/json"
 
 type Cinnamon struct {
 	BotID           string         `gorm:"primaryKey"`
 	TotalUsers      []UserStats    `gorm:"serializer:json"`
 	TotalServers    []ServerStats  `gorm:"serializer:json"`
 	TotalMessages   []MessageStats `gorm:"serializer:json"`
-	TotalXP         []XPStats      `gorm:"serializer:json"`
 	Uptime          int64
+	CreationDate    int64
 	UpSince         int64
 	TotalUptime     int64
 	TotalDowntime   int64
@@ -20,11 +18,6 @@ type Cinnamon struct {
 
 type UserStats struct {
 	UserCount int
-	TimeCount int64
-}
-
-type XPStats struct {
-	XPCount   int
 	TimeCount int64
 }
 
@@ -41,4 +34,20 @@ type MessageStats struct {
 type PastUptime struct {
 	Uptime  int64
 	UpSince int64
+}
+
+type UserModule struct {
+	Service string `gorm:"primaryKey"`
+	UUID    string `gorm:"primaryKey"`
+	Data    json.RawMessage
+	UID     string
+	AuthKey string
+}
+
+type ServerModule struct {
+	Service string `gorm:"primaryKey"`
+	UUID    string `gorm:"primaryKey"`
+	Data    json.RawMessage
+	UID     string
+	AuthKey string
 }

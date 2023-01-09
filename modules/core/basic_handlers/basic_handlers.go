@@ -1,4 +1,4 @@
-package coreserver
+package basic_handlers
 
 import (
 	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
@@ -20,13 +20,13 @@ func regenAuthKey(GID string) string {
 
 	DB.Save(&guild)
 
-	UpdateAuthKeys(GID, guild.AuthKey, oldKey)
+	updateDBAuthKeys(GID, guild.AuthKey, oldKey)
 
 	return guild.AuthKey
 
 }
 
-func UpdateAuthKeys(GID string, AuthKey string, OldKey string) {
+func updateDBAuthKeys(GID string, AuthKey string, OldKey string) {
 
 	//TODO AuthKeyUpdater
 
@@ -64,7 +64,7 @@ var (
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: "Your authentication key has been regenerated, new key is as follows: \n```" + newKeys + "```\nPlease keep it safe.",
-					Flags:   1 << 6,
+					Flags:   discordgo.MessageFlagsEphemeral,
 				},
 			})
 			if err != nil {
@@ -86,7 +86,7 @@ var (
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: "Your authentication key is as follows: \n```" + guild.AuthKey + "```\nPlease keep it safe.",
-					Flags:   1 << 6,
+					Flags:   discordgo.MessageFlagsEphemeral,
 				},
 			})
 			if err != nil {

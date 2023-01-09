@@ -1,4 +1,4 @@
-package discord
+package discord_client
 
 import (
 	"log"

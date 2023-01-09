@@ -1,4 +1,4 @@
-package minecraftAPIv1
+package minecraft_api_v1
 
 import (
 	"encoding/json"
@@ -40,5 +40,3 @@ type DiscordMessage struct {
 	Message string `json:"message"`
 	Channel string `json:"channel"`
 }
-
-// Client is a middleman between the websocket connection and the hub.

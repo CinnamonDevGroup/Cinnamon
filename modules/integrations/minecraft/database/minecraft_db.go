@@ -1,4 +1,4 @@
-package minecraft
+package minecraft_db
 
 type Minecraft struct {
 	AuthKey        string `gorm:"primaryKey"`
