@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
-	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/websocket"
-	minecraft_api_v1 "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/API/v1"
-	minecraft_db "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/database/core_models"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/websocket"
+	minecraft_api_v1 "github.com/CinnamonDevGroup/Cinnamon/modules/integrations/minecraft/api/v1"
+	minecraft_db "github.com/CinnamonDevGroup/Cinnamon/modules/integrations/minecraft/database"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 )
@@ -65,13 +65,13 @@ var WebsocketHandler = map[string]func(data websocket.IncomingData, h *websocket
 func onPlayerMessage(data minecraft_api_v1.Data) {
 
 	m := data.RawData
-	config := commonutils.Config
+	config := common.Config
 
-	s := commonutils.Session
+	s := common.Session
 
 	var chatMsg minecraft_api_v1.ChatMessage
 	json.Unmarshal(m, &chatMsg)
-	defer commonutils.RecoverPanic("")
+	defer common.RecoverPanic("")
 
 	if chatMsg.Mention == "" {
 		_, err := s.ChannelMessageSend("", ": "+chatMsg.Message)
@@ -93,19 +93,19 @@ func onPlayerMessage(data minecraft_api_v1.Data) {
 	}
 
 	if config.Debugging {
-		commonutils.LogEvent("Minecraft Player Message Event:\n"+chatMsg.Message+chatMsg.UUID, commonutils.LogInfo)
+		common.LogEvent("Minecraft Player Message Event:\n"+chatMsg.Message+chatMsg.UUID, common.LogInfo)
 	}
 }
 
 func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData json.RawMessage) {
-	s := commonutils.Session
-	DB := commonutils.DB
-	config := commonutils.Config
+	s := common.Session
+	DB := common.DB
+	config := common.Config
 
 	var authData minecraft_api_v1.Authenticate
 
 	json.Unmarshal(responseData, &authData)
-	defer commonutils.RecoverPanic(authData.DefaultChannel)
+	defer common.RecoverPanic(authData.DefaultChannel)
 	connection := minecraft_api_v1.ConnectionStatus{
 		AuthKey: authData.AuthKey,
 	}
@@ -140,11 +140,11 @@ func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData
 
 		if err != nil {
 			if config.Debugging {
-				commonutils.LogEvent("ClientAuthenticate ChannelMessageSend Error Event: "+fmt.Sprint(err), commonutils.LogError)
+				common.LogEvent("ClientAuthenticate ChannelMessageSend Error Event: "+fmt.Sprint(err), common.LogError)
 			}
 		} else {
 			if config.Debugging {
-				commonutils.LogEvent("ClientAuthenticate Client Register Event: "+client.Addr+" "+server.GID+" "+client.AuthKey, commonutils.LogInfo)
+				common.LogEvent("ClientAuthenticate Client Register Event: "+client.Addr+" "+server.GID+" "+client.AuthKey, common.LogInfo)
 			}
 		}
 	}
@@ -162,10 +162,10 @@ func clientAuthenticate(client *websocket.Client, h *websocket.Hub, responseData
 
 }
 
-func checkPlayerAuth(UUID string, cache websocket.ClientCache) (bool, coredb.Service) {
-	DB := commonutils.DB
+func checkPlayerAuth(UUID string, cache websocket.ClientCache) (bool, core_models.UserModule) {
+	DB := common.DB
 
-	currentUserService := coredb.Service{
+	currentUserService := core_models.UserModule{
 		Service: "minecraft",
 		UUID:    UUID,
 	}
@@ -176,14 +176,14 @@ func checkPlayerAuth(UUID string, cache websocket.ClientCache) (bool, coredb.Ser
 
 func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
 
-	DB := commonutils.DB
+	DB := common.DB
 
-	newUser := coredb.Service{
+	newUser := core_models.UserModule{
 		Service: "minecraft",
 		UUID:    UUID,
 	}
 
-	newAuthKey := commonutils.BabbleWords()
+	newAuthKey := common.BabbleWords()
 
 	newUser.AuthKey = newAuthKey
 
@@ -195,8 +195,8 @@ func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
 	}
 	AuthKick, err := json.Marshal(kickAuth)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -207,8 +207,8 @@ func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
 	}
 	response, err := json.Marshal(OutData)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -217,9 +217,9 @@ func KickNewPlayerAuth(UUID string, cache websocket.ClientCache) {
 }
 
 func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
-	DB := commonutils.DB
+	DB := common.DB
 
-	currentUser := coredb.Service{
+	currentUser := core_models.UserModule{
 		Service: "minecraft",
 		UUID:    UUID,
 	}
@@ -231,8 +231,8 @@ func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
 	}
 	AuthKick, err := json.Marshal(KickAuth)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -244,8 +244,8 @@ func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
 	}
 	response, err := json.Marshal(OutData)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -254,10 +254,10 @@ func kickPlayerAuth(UUID string, Cache websocket.ClientCache) {
 }
 
 func DecideAuth(UUID string, Cache websocket.ClientCache) {
-	DB := commonutils.DB
-	s := commonutils.Session
+	DB := common.DB
+	s := common.Session
 
-	currentUserService := coredb.Service{
+	currentUserService := core_models.UserModule{
 		Service: "minecraft",
 		UUID:    UUID,
 	}
@@ -266,7 +266,7 @@ func DecideAuth(UUID string, Cache websocket.ClientCache) {
 	guilds, err := s.UserGuilds(100, "", "")
 
 	if err != nil {
-		commonutils.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		common.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), common.LogError)
 		return
 	}
 
@@ -274,7 +274,7 @@ func DecideAuth(UUID string, Cache websocket.ClientCache) {
 		if len(guilds) == 100 {
 			newGuilds, err := s.UserGuilds(100, "", guilds[99].ID)
 			if err != nil {
-				commonutils.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), commonutils.LogError)
+				common.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), common.LogError)
 				break
 			}
 			for {
@@ -284,7 +284,7 @@ func DecideAuth(UUID string, Cache websocket.ClientCache) {
 					newGuilds = nil
 					newGuilds, err = s.UserGuilds(100, "", oldGuild.ID)
 					if err != nil {
-						commonutils.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), commonutils.LogError)
+						common.LogEvent("UserGuilds Error Event: "+fmt.Sprint(err), common.LogError)
 						break
 					}
 				} else {
@@ -319,8 +319,8 @@ func authFail(UUID string, Cache websocket.ClientCache) {
 	}
 	data, err := json.Marshal(FailAuth)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -333,8 +333,8 @@ func authFail(UUID string, Cache websocket.ClientCache) {
 
 	response, err := json.Marshal(responsedata)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -350,8 +350,8 @@ func authSuccess(UUID string, username string, Cache websocket.ClientCache) {
 
 	data, err := json.Marshal(AuthSuccess)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -363,8 +363,8 @@ func authSuccess(UUID string, username string, Cache websocket.ClientCache) {
 	}
 	response, err := json.Marshal(responsedata)
 	if err != nil {
-		if commonutils.Config.Debugging {
-			commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+		if common.Config.Debugging {
+			common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}
@@ -376,7 +376,7 @@ func onPlayerJoin(m []byte, Cache websocket.ClientCache) {
 
 	var playerJoined minecraft_api_v1.PlayerJoin
 	json.Unmarshal(m, &playerJoined)
-	defer commonutils.RecoverPanic(Cache.DefaultChannel)
+	defer common.RecoverPanic(Cache.DefaultChannel)
 
 	exists, user := checkPlayerAuth(playerJoined.UUID, Cache)
 	if !exists {

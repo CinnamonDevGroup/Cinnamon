@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
+	coredb "github.com/CinnamonDevGroup/Cinnamon/modules/core/database/core_models"
 	"github.com/bwmarrin/discordgo"
 	"github.com/tjarratt/babble"
 	"gorm.io/gorm"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -115,7 +115,7 @@ func (h *Hub) run() {
 		case outdata := <-WriteToWebsocket:
 			jsonvar, err := json.Marshal(outdata.OutboundData)
 			if err != nil {
-				commonutils.LogEvent("Websocket Client Send Error Event: "+fmt.Sprint(err), commonutils.LogError)
+				common.LogEvent("Websocket Client Send Error Event: "+fmt.Sprint(err), common.LogError)
 			}
 			outdata.Client.Send <- jsonvar
 		}

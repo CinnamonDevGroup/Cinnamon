@@ -1,7 +1,7 @@
 package database
 
 import (
-	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
+	coredb "github.com/CinnamonDevGroup/Cinnamon/modules/core/database/core_models"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
@@ -14,7 +14,7 @@ func Init() *gorm.DB {
 		panic(err)
 	}
 
-	cinnamondb.AutoMigrate(&coredb.Cinnamon{}, coredb.Guild{}, coredb.User{}, coredb.Service{})
+	cinnamondb.AutoMigrate(&coredb.Cinnamon{}, coredb.Guild{}, coredb.User{}, coredb.UserModule{}, coredb.ServerModule{})
 
 	return cinnamondb
 }

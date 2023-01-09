@@ -1,22 +1,21 @@
-package basic_handlers
+package core_handlers
 
 import (
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
-	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
-
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/database/core_models"
 	"github.com/bwmarrin/discordgo"
 )
 
 func regenAuthKey(GID string) string {
 
-	DB := commonutils.DB
-	guild := coredb.Guild{GID: GID}
+	DB := common.DB
+	guild := core_models.Guild{GID: GID}
 
 	DB.First(&guild)
 
 	oldKey := guild.AuthKey
 
-	guild.AuthKey = commonutils.BabbleWords()
+	guild.AuthKey = common.BabbleWords()
 
 	DB.Save(&guild)
 
@@ -30,7 +29,7 @@ func updateDBAuthKeys(GID string, AuthKey string, OldKey string) {
 
 	//TODO AuthKeyUpdater
 
-	for _, x := range commonutils.AuthKeyUpdater {
+	for _, x := range common.AuthKeyUpdater {
 		x(GID, AuthKey, OldKey)
 	}
 
@@ -38,7 +37,7 @@ func updateDBAuthKeys(GID string, AuthKey string, OldKey string) {
 
 func OnServerJoin(z *discordgo.GuildCreate) {
 
-	commonutils.CheckGuildExists(z.Guild.ID)
+	common.CheckGuildExists(z.Guild.ID)
 }
 
 var (
@@ -57,8 +56,8 @@ var (
 	}
 	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
 		"regenauthkey": func(i *discordgo.InteractionCreate) {
-			s := commonutils.Session
-			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			s := common.Session
+			common.CheckGuildExists(i.Interaction.GuildID)
 			newKeys := regenAuthKey(i.Interaction.GuildID)
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -73,12 +72,12 @@ var (
 
 		},
 		"authkey": func(i *discordgo.InteractionCreate) {
-			s := commonutils.Session
-			DB := commonutils.DB
+			s := common.Session
+			DB := common.DB
 
-			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			common.CheckGuildExists(i.Interaction.GuildID)
 
-			guild := coredb.Guild{GID: i.Interaction.GuildID}
+			guild := core_models.Guild{GID: i.Interaction.GuildID}
 
 			DB.First(&guild)
 

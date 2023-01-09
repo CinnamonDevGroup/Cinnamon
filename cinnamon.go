@@ -6,12 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
-	databaseHelper "github.com/AngelFluffyOokami/Cinnamon/modules/core/database"
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/discord"
-	coreserver "github.com/AngelFluffyOokami/Cinnamon/modules/core/server"
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/websocket"
-	"github.com/AngelFluffyOokami/Cinnamon/modules/integrations/personalization/personalization"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/core_handlers"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/database"
+	discord_client "github.com/CinnamonDevGroup/Cinnamon/modules/core/discord"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/websocket"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 )
@@ -23,28 +22,27 @@ var allCommandHandlers = make(map[string]func(i *discordgo.InteractionCreate))
 var allWebsocketHandlers = make(map[string]func(receivedData websocket.IncomingData, h *websocket.Hub))
 var allCommands []discordgo.ApplicationCommand
 var DBMigrate []func()
-var config commonutils.Data
+var config common.Data
 var off = make(chan bool)
 var err error
 
 func init() {
 
-	go personalization.InitPersonalization()
 	CreateOrUpdateJSON("config.json")
 	beautifyJSONFile("config.json")
 	config, err = ReadJSON("config.json")
-	commonutils.Config = config
+	common.Config = config
 	if err != nil {
 		panic(err)
 	}
-	DB = databaseHelper.Init()
-	commonutils.DB = DB
-	s = discord.Init(config.Token)
+	DB = database.Init()
+	common.DB = DB
+	s = discord_client.Init(config.Token)
 
-	commonutils.Session = s
+	common.Session = s
 
-	allCommands = append(allCommands, coreserver.Commands...)
-	for k, v := range coreserver.CommandsHandlers {
+	allCommands = append(allCommands, core_handlers.Commands...)
+	for k, v := range core_handlers.CommandsHandlers {
 		allCommandHandlers[k] = v
 	}
 }

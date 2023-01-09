@@ -3,16 +3,16 @@ package minecraft_discord
 import (
 	"errors"
 
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
 
-	coredb "github.com/AngelFluffyOokami/Cinnamon/modules/core/database/core"
-	minecraftdb "github.com/AngelFluffyOokami/Cinnamon/modules/integrations/minecraft/database"
+	coredb "github.com/CinnamonDevGroup/Cinnamon/modules/core/database/core_models"
+	minecraftdb "github.com/CinnamonDevGroup/Cinnamon/modules/integrations/minecraft/database"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 )
 
 func checkGuildExists(GID string) bool {
-	DB := commonutils.DB
+	DB := common.DB
 
 	guild := coredb.Guild{GID: GID}
 	DB.First(&guild)
@@ -35,7 +35,7 @@ func checkGuildExists(GID string) bool {
 
 func initializeGuild(GID string) {
 
-	DB := commonutils.DB
+	DB := common.DB
 
 	guild := coredb.Guild{GID: GID}
 
@@ -53,7 +53,7 @@ func initializeGuild(GID string) {
 
 func unlinkServer(GID string) {
 
-	DB := commonutils.DB
+	DB := common.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -68,7 +68,7 @@ func unlinkServer(GID string) {
 
 func RegenAuthKeys(GID string, AuthKey string, OldKey string) {
 
-	DB := commonutils.DB
+	DB := common.DB
 
 	guild := coredb.Guild{GID: GID}
 	DB.First(&guild)
@@ -104,7 +104,7 @@ func RegenAuthKeys(GID string, AuthKey string, OldKey string) {
 
 func deleteGuildData(GID string) {
 
-	DB := commonutils.DB
+	DB := common.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -117,7 +117,7 @@ func deleteGuildData(GID string) {
 }
 
 func enableGuild(GID string) string {
-	DB := commonutils.DB
+	DB := common.DB
 	guild := coredb.Guild{GID: GID}
 
 	DB.First(&guild)
@@ -158,10 +158,10 @@ var (
 	}
 	CommandsHandlers = map[string]func(i *discordgo.InteractionCreate){
 		"linkminecraftserver": func(i *discordgo.InteractionCreate) {
-			commonutils.RecoverPanic(i.Interaction.ChannelID)
-			DB := commonutils.DB
-			s := commonutils.Session
-			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			common.RecoverPanic(i.Interaction.ChannelID)
+			DB := common.DB
+			s := common.Session
+			common.CheckGuildExists(i.Interaction.GuildID)
 
 			exists := checkGuildExists(i.Interaction.GuildID)
 
@@ -194,9 +194,9 @@ var (
 
 		},
 		"deleteminecraftlink": func(i *discordgo.InteractionCreate) {
-			commonutils.RecoverPanic(i.Interaction.ChannelID)
-			s := commonutils.Session
-			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			common.RecoverPanic(i.Interaction.ChannelID)
+			s := common.Session
+			common.CheckGuildExists(i.Interaction.GuildID)
 			exists := checkGuildExists(i.Interaction.GuildID)
 
 			if !exists {
@@ -229,9 +229,9 @@ var (
 		},
 
 		"unlinkminecraftserver": func(i *discordgo.InteractionCreate) {
-			commonutils.RecoverPanic(i.Interaction.ChannelID)
-			s := commonutils.Session
-			commonutils.CheckGuildExists(i.Interaction.GuildID)
+			common.RecoverPanic(i.Interaction.ChannelID)
+			s := common.Session
+			common.CheckGuildExists(i.Interaction.GuildID)
 			exists := checkGuildExists(i.Interaction.GuildID)
 
 			if exists {

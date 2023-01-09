@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
 
 	"github.com/google/uuid"
 
@@ -19,8 +19,8 @@ import (
 // reads from this goroutine.
 
 func (c *Client) readPump() {
-	defer commonutils.RecoverPanic("")
-	config := commonutils.Config
+	defer common.RecoverPanic("")
+	config := common.Config
 	defer func() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
@@ -32,14 +32,14 @@ func (c *Client) readPump() {
 		err := c.Conn.ReadJSON(&data)
 		if err != nil {
 			if config.Debugging {
-				commonutils.LogEvent("WS Unexpected Disconnect Event: "+fmt.Sprint(err), commonutils.LogWarning)
+				common.LogEvent("WS Unexpected Disconnect Event: "+fmt.Sprint(err), common.LogWarning)
 			}
 			break
 		}
 		data.Client = c
 		if err != nil {
 			if config.Debugging {
-				commonutils.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), commonutils.LogError)
+				common.LogEvent("JSON Marshal Error Event: "+fmt.Sprint(err), common.LogError)
 			}
 		}
 		c.Hub.Broadcast <- data
@@ -54,8 +54,8 @@ application ensures that there is at most one writer to a connection by
 executing all writes from this goroutine.
 */
 func (c *Client) writePump() {
-	defer commonutils.RecoverPanic("")
-	config := commonutils.Config
+	defer common.RecoverPanic("")
+	config := common.Config
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -74,7 +74,7 @@ func (c *Client) writePump() {
 			w, err := c.Conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				if config.Debugging {
-					commonutils.LogEvent("WritePump NextWriter Error Event: "+fmt.Sprint(err), commonutils.LogError)
+					common.LogEvent("WritePump NextWriter Error Event: "+fmt.Sprint(err), common.LogError)
 				}
 				return
 			}
@@ -83,7 +83,7 @@ func (c *Client) writePump() {
 
 			if err != nil {
 				if config.Debugging {
-					commonutils.LogEvent("WritePump Write Error: "+fmt.Sprint(err), commonutils.LogError)
+					common.LogEvent("WritePump Write Error: "+fmt.Sprint(err), common.LogError)
 				}
 			}
 
@@ -93,13 +93,13 @@ func (c *Client) writePump() {
 				_, err = w.Write(newline)
 				if err != nil {
 					if config.Debugging {
-						commonutils.LogEvent("WritePump Write Error: "+fmt.Sprint(err), commonutils.LogError)
+						common.LogEvent("WritePump Write Error: "+fmt.Sprint(err), common.LogError)
 					}
 				}
 				_, err = w.Write(<-c.Send)
 				if err != nil {
 					if config.Debugging {
-						commonutils.LogEvent("WritePump Write Error: "+fmt.Sprint(err), commonutils.LogError)
+						common.LogEvent("WritePump Write Error: "+fmt.Sprint(err), common.LogError)
 					}
 				}
 			}
@@ -110,13 +110,13 @@ func (c *Client) writePump() {
 		case <-ticker.C:
 			if err := c.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 				if config.Debugging {
-					commonutils.LogEvent("Set Write Deadline Error Event: "+fmt.Sprint(err), commonutils.LogError)
+					common.LogEvent("Set Write Deadline Error Event: "+fmt.Sprint(err), common.LogError)
 				}
 				return
 			}
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				if config.Debugging {
-					commonutils.LogEvent("WritePump Write Message Error Event: "+fmt.Sprint(err), commonutils.LogError)
+					common.LogEvent("WritePump Write Message Error Event: "+fmt.Sprint(err), common.LogError)
 				}
 				return
 			}
@@ -126,12 +126,12 @@ func (c *Client) writePump() {
 
 // serveWs handles websocket requests from the peer.
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	defer commonutils.RecoverPanic("")
-	config := commonutils.Config
+	defer common.RecoverPanic("")
+	config := common.Config
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		if config.Debugging {
-			commonutils.LogEvent("serverWS Upgrader Error Event: "+fmt.Sprint(err), commonutils.LogError)
+			common.LogEvent("serverWS Upgrader Error Event: "+fmt.Sprint(err), common.LogError)
 		}
 		return
 	}

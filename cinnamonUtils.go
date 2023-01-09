@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/AngelFluffyOokami/Cinnamon/modules/core/commonutils"
-	coreserver "github.com/AngelFluffyOokami/Cinnamon/modules/core/server"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/common"
+	"github.com/CinnamonDevGroup/Cinnamon/modules/core/core_handlers"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -22,8 +22,8 @@ const (
 	feedbackchannel = "feedbackchannelidhere"
 )
 
-func ReadJSON(filename string) (commonutils.Data, error) {
-	commonutils.Config = config
+func ReadJSON(filename string) (common.Data, error) {
+	common.Config = config
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return config, err
@@ -55,7 +55,7 @@ func initDiscordHandlers() {
 		registeredCommands[i] = cmd
 	}
 	s.AddHandler(func(s *discordgo.Session, z *discordgo.GuildCreate) {
-		coreserver.OnServerJoin(z)
+		core_handlers.OnServerJoin(z)
 	})
 }
 
@@ -103,11 +103,11 @@ func beautifyJSONFile(filename string) {
 // CreateOrUpdateJSON creates or updates a JSON file with two keys
 func CreateOrUpdateJSON(file string) error {
 	// Read the existing file
-	data := commonutils.Data{}
+	data := common.Data{}
 	bytes, err := os.ReadFile(file)
 	if err != nil {
 		// File does not exist, create it
-		data = commonutils.Data{
+		data = common.Data{
 			Token:           token,
 			AdminServer:     adminserver,
 			AdminChannel:    adminchannel,
