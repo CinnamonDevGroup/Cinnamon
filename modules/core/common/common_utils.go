@@ -24,7 +24,7 @@ func BabbleWords() string {
 	return key
 }
 
-func initializeServer(GID string) {
+func AddGuildToDB(GID string) {
 	defer RecoverPanic("")
 
 	s := Session
@@ -189,7 +189,7 @@ func CheckGuildExists(GID string) {
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 
-		initializeServer(GID)
+		AddGuildToDB(GID)
 
 	} else {
 		return

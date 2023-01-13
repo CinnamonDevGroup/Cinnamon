@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Init() {
+func InitWebsocket() {
 	r := gin.Default()
 	hub := newHub()
 	go hub.run()

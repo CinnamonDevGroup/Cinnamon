@@ -1,8 +1,8 @@
 └── modules
    ├── core
    │   ├── basic_handlers
-   │   │   └── [basic_handlers]
-   │   │        └── basic_handlers.go
+   │   │   └── [core_handlers]
+   │   │        └── core_handlers.go
    │   │            ├── func regenAuthKey(string) (string)
    │   │            ├── func updateDBAuthKeys(GID string, AuthKey string, OldKey string) ()
    │   │            ├── func OnServerJoin(z *discordgo.GuildCreate) (discord_handler) ()
@@ -32,7 +32,7 @@
    │   │        │       └── Level   string
    │   │        └── common_utils.go
    │   │            ├── func BabbleWords()                          (string)
-   │   │            ├── func initializeServer(GID string)           ()
+   │   │            ├── func AddGuildToDB(GID string)           ()
    │   │            ├── const
    │   │            │   ├── LogError
    │   │            │   ├── LogWarning
@@ -115,11 +115,11 @@
    │   │   │            │   └── UserModules     []UserModule
    │   │   └── [database]
    │   │        └── database.go
-   │   │            └── func Init() (*gorm.DB)
+   │   │            └── func InitDB() (*gorm.DB)
    │   ├── discord
-   │   │   └── [discord_client]
-   │   │        └──discord_client.go
-   │   │           └── func Init() (*discordgo.Session) 
+   │   │   └── [discord_session]
+   │   │        └──discord_session.go
+   │   │           └── func InitSession() (*discordgo.Session) 
    │   └── websocket
    │       └── [websocket]
    │            ├── client.go
@@ -186,7 +186,7 @@
    │            │   ├── var newline
    │            │   └── var upgrader websocket.Upgrader
    │            └── websocket_server.go
-   │                └── func Init() ()
+   │                └── func InitWebsocket() ()
    └── integrations
        ├── affection
        │   └── database
@@ -282,7 +282,7 @@
        │   │   └── [minecraft_discord]
        │   │        └── minecraft_discord.go
        │   │            ├── func checkGuildExists(GID string) (bool)
-       │   │            ├── func initializeGuild(GID string) ()
+       │   │            ├── func addGuildToAdd(GID string) ()
        │   │            ├── func unlinkServer(GID string) ()
        │   │            ├── func RegenAuthKeys(GID string, AuthKey string, OldKey string) ()
        │   │            └── func deleteGuildData(GID string) ()

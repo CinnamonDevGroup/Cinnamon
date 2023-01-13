@@ -1,4 +1,4 @@
-package discord_client
+package discord_session
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func Init(disToken string) *discordgo.Session {
+func InitSession(disToken string) *discordgo.Session {
 	s, err := discordgo.New("Bot " + disToken)
 	if err != nil {
 		log.Fatalf("Invalid bot parameters: %v", err)

@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Init() *gorm.DB {
+func InitDB() *gorm.DB {
 
 	cinnamondb, err := gorm.Open(sqlite.Open("database/cinnamon.db"), &gorm.Config{})
 

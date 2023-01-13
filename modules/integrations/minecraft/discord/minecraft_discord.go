@@ -33,7 +33,7 @@ func checkGuildExists(GID string) bool {
 
 }
 
-func initializeGuild(GID string) {
+func addGuildToDB(GID string) {
 
 	DB := common.DB
 
@@ -167,7 +167,7 @@ var (
 
 			var message string
 			if !exists {
-				initializeGuild(i.Interaction.GuildID)
+				addGuildToDB(i.Interaction.GuildID)
 				message = "Minecraft integration enabled.\n"
 			} else {
 				message = enableGuild(i.Interaction.GuildID)
