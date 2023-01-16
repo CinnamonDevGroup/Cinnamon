@@ -77,6 +77,10 @@ func init() {
 	s = discord_session.InitSession(config.Token)
 	common.Session = s
 
+	/*
+	* 	core_handlers.Commands get appended to the allCommands
+	*	core_handlers.CommandsHandlers get appended to the command handlers map.
+	 */
 	allCommands = append(allCommands, core_handlers.Commands...)
 	for k, v := range core_handlers.CommandsHandlers {
 		allCommandHandlers[k] = v
@@ -84,21 +88,34 @@ func init() {
 }
 
 func main() {
+	/*
+	*	Websocket handlers get added to websocket.WebsocketHandlers get added after init() specifically
+	*	so all modules append their handlers during init() and they don't get appended after the websocket has been initialized.
+	 */
 	websocket.WebsocketHandlers = allWebsocketHandlers
 	go websocket.InitWebsocket()
+
+	//	iterate over DBMigrate function and run every function containing the DB automigrate function for every module.
+
 	for _, x := range DBMigrate {
 		x()
 	}
+
+	//	Run initDiscordHandlers, registering every interaction handler, and adding commands.
 	initDiscordHandlers()
 
 	fmt.Println("Bot is running")
 
+	// 	Create os.Signal chan to detect when OS sends a kill command.
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	// 	Select between sc and off, sc being system signals, and off being a channel for the bot to send signals to shut itself down.
 	select {
 	case <-sc:
 	case <-off:
 	}
+
+	//	Clean up all commands during bot shutdown, deregistering commands and closing discord session.
 	exit()
 
 }

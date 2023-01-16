@@ -22,23 +22,28 @@ const (
 	feedbackchannel = "feedbackchannelidhere"
 )
 
+// Function reads json file, returning variable of type config.Data
 func ReadJSON(filename string) (common.Data, error) {
-	common.Config = config
+	//	Reads file and saves []byte to variable data, then checks if there was an error, if error, then return nil config and error.
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return config, err
 	}
 
+	//	Unmarshals []byte of type json into variable config of type config.Data, if error, then return nil config, and error.
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return config, err
 	}
 
+	// 	If no error, return config, and nil error.
 	return config, nil
 }
 
+// Registers commands, and adds command handling functions to discord session after discord session is opened.
 func initDiscordHandlers() {
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	//	Adds handler of type i *discordgo.InteractionCreate that selects the appropriate handler over a map of command handlers depending on the application
+	s.AddHandler(func(i *discordgo.InteractionCreate) {
 		if h, ok := allCommandHandlers[i.ApplicationCommandData().Name]; ok {
 			fmt.Println(i.ApplicationCommandData().Name)
 			h(i)
@@ -46,6 +51,7 @@ func initDiscordHandlers() {
 	})
 
 	log.Println("Adding commands...")
+	// registers commands with the discord session.
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(allCommands))
 	for i, v := range allCommands {
 		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &v)
@@ -54,28 +60,34 @@ func initDiscordHandlers() {
 		}
 		registeredCommands[i] = cmd
 	}
+	// adds core handlers
 	s.AddHandler(func(s *discordgo.Session, z *discordgo.GuildCreate) {
 		core_handlers.OnServerJoin(z)
 	})
 }
 
+// Clean up session by removing commands and closing the session afterwards
 func exit() {
 	fmt.Println("Removing commands...")
 
+	// Get a list of all the commands registered within.
 	commands, err := s.ApplicationCommands(s.State.User.ID, "")
 	if err != nil {
 		panic(err)
 	}
-	commandLen := len(commands)
-	for x := 0; x < commandLen; x++ {
+
+	// iterates through all commands and deletes them.
+	for x := 0; x < len(commands); x++ {
 		err := s.ApplicationCommandDelete(s.State.User.ID, "", commands[x].ID)
 		if err != nil {
 			panic(err)
 		}
 	}
+	// closes discord session.
 	s.Close()
 }
 
+// beautifies a json file
 func beautifyJSONFile(filename string) {
 	// Open the given file
 	jsonFile, err := os.ReadFile(filename)
@@ -122,7 +134,7 @@ func CreateOrUpdateJSON(file string) error {
 		if err := json.Unmarshal(bytes, &data); err != nil {
 			return fmt.Errorf("failed to parse existing file: %v", err)
 		}
-		// Check if key1 or key2 are missing
+		// Check if keys are missing.
 		if data.Token == "" {
 			data.Token = token
 		}
